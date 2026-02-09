@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,9 +16,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.initializer.graph.Edge;
+import com.initializer.graph.Node;
+import com.initializer.service.GraphService;
+
 @RestController
 @RequestMapping("/api")
 public class VisualizerController {
+
+    @Autowired
+    private GraphService graphService;
 
     @GetMapping("/health")
     public String health() {
@@ -28,19 +36,37 @@ public class VisualizerController {
     @GetMapping("/graph")
     public ResponseEntity<Map<String, Object>> getGraph() {
         Map<String, Object> graph = new HashMap<>();
-        graph.put("nodes", getMockNodes());
-        graph.put("edges", getMockEdges());
+        graph.put("nodes", getNodes().getBody());
+        graph.put("edges", getEdges().getBody());
         return ResponseEntity.ok(graph);
     }
 
     @GetMapping("/graph/nodes")
     public ResponseEntity<List<Map<String, Object>>> getNodes() {
-        return ResponseEntity.ok(getMockNodes());
+        List<Node> nodes = graphService.getNodes();
+        List<Map<String, Object>> nodeMaps = new ArrayList<>();
+        for (Node node : nodes) {
+            Map<String, Object> nodeMap = new HashMap<>();
+            nodeMap.put("id", node.getId());
+            nodeMap.put("type", node.getType().toString());
+            nodeMaps.add(nodeMap);
+        }
+        return ResponseEntity.ok(nodeMaps);
     }
 
     @GetMapping("/graph/edges")
     public ResponseEntity<List<Map<String, Object>>> getEdges() {
-        return ResponseEntity.ok(getMockEdges());
+        List<Edge> edges = graphService.getEdges();
+        List<Map<String, Object>> edgeMaps = new ArrayList<>();
+        for (Edge edge : edges) {
+            Map<String, Object> edgeMap = new HashMap<>();
+            edgeMap.put("source", edge.getSourceId());
+            edgeMap.put("target", edge.getTargetId());
+            edgeMap.put("attackAction", edge.getAttackAction());
+            edgeMap.put("weight", edge.getWeight());
+            edgeMaps.add(edgeMap);
+        }
+        return ResponseEntity.ok(edgeMaps);
     }
 
     // Path computation endpoints
@@ -74,35 +100,4 @@ public class VisualizerController {
         return ResponseEntity.ok(path);
     }
 
-    // Mock data methods
-    private List<Map<String, Object>> getMockNodes() {
-        List<Map<String, Object>> nodes = new ArrayList<>();
-        Map<String, Object> node1 = new HashMap<>();
-        node1.put("id", "web_server");
-        node1.put("label", "Web Server");
-        node1.put("type", "asset");
-        node1.put("vulnerabilities", Arrays.asList("CVE-2023-1234", "CVE-2023-5678"));
-
-        Map<String, Object> node2 = new HashMap<>();
-        node2.put("id", "database");
-        node2.put("label", "Database");
-        node2.put("type", "asset");
-        node2.put("vulnerabilities", Arrays.asList("CVE-2023-9999"));
-
-        nodes.add(node1);
-        nodes.add(node2);
-        return nodes;
-    }
-
-    private List<Map<String, Object>> getMockEdges() {
-        List<Map<String, Object>> edges = new ArrayList<>();
-        Map<String, Object> edge1 = new HashMap<>();
-        edge1.put("source", "web_server");
-        edge1.put("target", "database");
-        edge1.put("label", "SQL Injection");
-        edge1.put("risk", "HIGH");
-
-        edges.add(edge1);
-        return edges;
-    }
 }

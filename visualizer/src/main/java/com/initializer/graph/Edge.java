@@ -3,16 +3,34 @@ package com.initializer.graph;
 // the Edge class represents an attacker action that allows movement from node to node
 public class Edge {
     
+    // source node id
+    private final String sourceId;
+
+    // target node id
+    private final String targetId;
+
     // human readable description of the attacker action
-    private String attackAction;
+    private final String attackAction;
 
     // numeric weight that represents the difficulty/cost of performing this attack action (lower values = easier attacks)
-    private int weight;
+    private final int weight;
                                                   
-    // constructor for creating an edge with a specific attack action label and difficulty weight
-    public Edge(String attackAction, int weight) {
+    // constructor for creating an edge with source, target, attack action, and weight
+    public Edge(String sourceId, String targetId, String attackAction, int weight) {
+        this.sourceId = sourceId;
+        this.targetId = targetId;
         this.attackAction = attackAction;
         this.weight = weight;
+    }
+
+    // returns the source node id
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    // returns the target node id
+    public String getTargetId() {
+        return targetId;
     }
 
     // returns the attack action label for the edge
