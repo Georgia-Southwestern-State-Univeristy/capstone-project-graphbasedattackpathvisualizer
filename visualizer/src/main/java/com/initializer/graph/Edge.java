@@ -4,16 +4,16 @@ package com.initializer.graph;
 public class Edge {
     
     // source node id
-    private final String sourceId;
+    private String sourceId;
 
     // target node id
-    private final String targetId;
+    private String targetId;
 
     // human readable description of the attacker action
-    private final String attackAction;
+    private String attackAction;
 
     // numeric weight that represents the difficulty/cost of performing this attack action (lower values = easier attacks)
-    private final int weight;
+    private int weight;
                                                   
     // constructor for creating an edge with source, target, attack action, and weight
     public Edge(String sourceId, String targetId, String attackAction, int weight) {

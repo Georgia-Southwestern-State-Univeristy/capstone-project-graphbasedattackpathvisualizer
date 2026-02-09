@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Compiled class file
 *.class
 
@@ -69,3 +70,39 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+=======
+################################
+# Java / Spring Boot
+################################
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+################################
+# Node / Frontend (Vite, Tailwind)
+################################
+node_modules/
+Website/node_modules/
+Website/.vite/
+Website/.vite-temp/
+dist/
+build/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+################################
+# OS / Editor files
+################################
+.DS_Store
+Thumbs.db
+
+################################
+# VS Code (keep settings if desired)
+################################
+.vscode/*
+!.vscode/settings.json
+>>>>>>> b6ef190abe33c8ed7fc0d508c107f65ada812ef7
