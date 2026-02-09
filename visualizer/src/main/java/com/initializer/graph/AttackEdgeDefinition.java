@@ -47,5 +47,12 @@ public class AttackEdgeDefinition {
     public String getLabel() {
         return label;
     }
+
+
+    /* Returns the base difficulty weight for this attack edge 
+    (comes from AttackType and assumes a baseline environment w/ no mitigations enabled) */
+    public int getWeight() {
+        return attackType.getBaseWeight();
+    }
 }
 
