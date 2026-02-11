@@ -12,7 +12,7 @@ import com.initializer.graph.SmallBusinessAttackGraph;
 
 
 // Service layer responsible for providing graph data
-// extracted from the predefined JGraphT attack graph.
+// extracted from the predefined JGraphT attack graph
 
 @Service
 public class GraphService {
@@ -25,14 +25,14 @@ public class GraphService {
     }
 
     
-    // Returns all nodes in the attack graph.
+    // Returns all nodes in the attack graph
     
     public List<Node> getNodes() {
         return new ArrayList<>(graph.vertexSet());
     }
 
     
-    // Returns all edges in the attack graph with source and target information.
+    // Returns all edges in the attack graph with source and target information
     
     public List<GraphEdgeDTO> getEdges() {
         List<GraphEdgeDTO> edges = new ArrayList<>();
@@ -50,5 +50,11 @@ public class GraphService {
         }
 
         return edges;
+    }
+
+    // Returns the entire graph structure
+    public DirectedWeightedMultigraph<Node, Edge> getGraph() {
+        return graph;
+
     }
 }
