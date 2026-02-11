@@ -47,6 +47,25 @@ public class ShortestPathService {
         return path.getVertexList();
     }
 
+    // Returns all nodes that are classified as attacker entry points
+    // This allows for possible future expansion to multiple attacker nodes without
+    // hardcoding specific node IDs.
+    public List<Node> getAttackerEntryNodes() {
+        return graph.vertexSet()
+            .stream()
+            .filter(node -> node.getType() == com.initializer.graph.NodeType.ATTACKER)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Returns all nodes classified as high-value targets
+    // For MVP, this includes only CUSTOMER_DB nodes
+    public List<Node> getHighValueTargetNodes() {
+        return graph.vertexSet()
+            .stream()
+            .filter(node -> node.getType() == com.initializer.graph.NodeType.CUSTOMER_DB)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
     // Helper method to locate a node by ID inside the existing graph
     private Optional<Node> findNodeById(String id) {
         return graph.vertexSet()
