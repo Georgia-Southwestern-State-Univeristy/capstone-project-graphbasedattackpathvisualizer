@@ -11,11 +11,16 @@
     <h1 class="text-center text-3xl font-bold mt-10 ">Graph Based Attack Visualizer</h1>
     </div>
     <div class="mt-10 mx-20">
-  <div
-    id="cy"
-    class="w-full h-[450px] bg-white rounded-lg shadow"
-  ></div>
-    </div>
+<div class="w-full max-w-6xl mt-6 px-4">
+  <div class="flex items-center gap-2 mb-3">
+    <button id="reloadBtn" class="px-3 py-2 rounded bg-black text-white">
+      Reload Graph
+    </button>
+    <span id="status" class="text-sm text-gray-600"></span>
+  </div>
+
+  <div id="cy" class="w-full h-[650px] bg-white rounded shadow"></div>
+</div>
 
 <div class="inline-flex gap-2 items-center mt-20 ml-20">
   <div class="relative inline-block w-11 h-5">

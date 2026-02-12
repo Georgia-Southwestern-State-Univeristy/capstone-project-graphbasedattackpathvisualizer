@@ -22,9 +22,8 @@ public class ShortestPathService {
         this.graph = graphService.getGraph();
     }
 
-    
-    // Computes the shortest path between two node IDs using Dijkstra's algorithm 
-    public List<Node> computeShortestPath(String sourceId, String targetId) {
+    // Computes the shortest attack path and returns ordered nodes, edges, and total path cost
+    public AttackPathResult computeAttackPath(String sourceId, String targetId) {
 
         Node source = findNodeById(sourceId)
                 .orElseThrow(() ->
@@ -44,7 +43,30 @@ public class ShortestPathService {
                     "No attack path exists between " + sourceId + " and " + targetId);
         }
 
-        return path.getVertexList();
+        return new AttackPathResult(
+                path.getVertexList(),
+                path.getEdgeList(),
+                path.getWeight()
+        );
+    }
+
+    // Returns all nodes that are classified as attacker entry points
+    // This allows for possible future expansion to multiple attacker nodes without
+    // hardcoding specific node IDs.
+    public List<Node> getAttackerEntryNodes() {
+        return graph.vertexSet()
+            .stream()
+            .filter(node -> node.getType() == com.initializer.graph.NodeType.ATTACKER)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Returns all nodes classified as high-value targets
+    // For MVP, this includes only CUSTOMER_DB nodes
+    public List<Node> getHighValueTargetNodes() {
+        return graph.vertexSet()
+            .stream()
+            .filter(node -> node.getType() == com.initializer.graph.NodeType.CUSTOMER_DB)
+            .collect(java.util.stream.Collectors.toList());
     }
 
     // Helper method to locate a node by ID inside the existing graph
