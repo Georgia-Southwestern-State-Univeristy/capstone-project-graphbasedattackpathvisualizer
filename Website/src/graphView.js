@@ -50,63 +50,60 @@ function clearPathHighlighting() {
 function applyPathHighlight(pathResp) {
   clearPathHighlighting();
 
-  // Validate
-  if (!Array.isArray(pathResp.traversalOrder)) {
-    throw new Error("Path response missing traversalOrder[]");
-  }
-  if (!Array.isArray(pathResp.pathEdges)) {
-    throw new Error("Path response missing pathEdges[]");
+  if (!Array.isArray(pathResp.nodes) || !Array.isArray(pathResp.edges)) {
+    throw new Error("Invalid path response format");
   }
 
-  // Highlight nodes in traversal order
-  pathResp.traversalOrder.forEach((id, i) => {
-    const node = cy.getElementById(id);
+  // Highlight nodes in order
+  pathResp.nodes.forEach((nodeObj, i) => {
+    const node = cy.getElementById(nodeObj.id);
     if (!node.empty()) {
       node.addClass("pathNode");
-      node.data("orderLabel", `${i + 1}: ${id}`);
+      node.data("orderLabel", `${i + 1}`);
     }
   });
 
-  // Highlight edges (exact match)
-  pathResp.pathEdges.forEach((e) => {
-    const edgeId = `${e.source}__${e.target}__${e.attackAction ?? ""}`;
-    const edge = cy.getElementById(edgeId);
-    if (!edge.empty()) {
-      edge.addClass("pathEdge");
+  // Highlight edges IN ORDER between consecutive nodes
+  for (let i = 0; i < pathResp.nodes.length - 1; i++) {
+    const source = pathResp.nodes[i].id;
+    const target = pathResp.nodes[i + 1].id;
+
+    const matchingEdge = cy.edges().filter(edge =>
+      edge.data("source") === source &&
+      edge.data("target") === target
+    );
+
+    if (matchingEdge.length > 0) {
+      matchingEdge.addClass("pathEdge");
     }
-  });
+  }
 
   const sel = cy.elements(".pathNode, .pathEdge");
   if (sel.length > 0) cy.fit(sel, 60);
 }
 
+
 // EXPORT: called by your button
 export async function computeAndShowPath() {
   const status = document.getElementById("status");
 
-  const start = document.getElementById("startNode")?.value;
-  const end = document.getElementById("endNode")?.value;
+  const start = "attacker";
+  const end = "customerDb";
+  
+  try {
+    if (status) status.textContent = "Computing shortest path...";
 
-  if (!start || !end) {
-    if (status) status.textContent = "Pick a start and end node.";
-    return;
-  }
-  if (!cy) {
-    if (status) status.textContent = "Graph not loaded yet.";
-    return;
-  }
+    const pathResp = await fetchAttackPath(start, end);
 
-  if (status) status.textContent = "Computing shortest path...";
+    applyPathHighlight(pathResp);
 
-  const pathResp = await fetchAttackPath(start, end);
+    if (status) {
+      status.textContent = `Shortest path computed. Total cost = ${pathResp.totalCost}`;
+    }
 
-  // If your backend still returns nodes/edges/totalCost (AttackPathResult),
-  // you MUST convert backend to the DTO we discussed:
-  // { traversalOrder: [...], pathEdges: [...], totalCost: ... }
-  applyPathHighlight(pathResp);
-
-  if (status) {
-    status.textContent = `Path steps=${pathResp.traversalOrder.length}, totalCost=${pathResp.totalCost ?? "?"}`;
+  } catch (err) {
+    if (status) status.textContent = "Error computing path.";
+    console.error(err);
   }
 }
 
@@ -116,36 +113,13 @@ export function clearPath() {
   const status = document.getElementById("status");
   if (status) status.textContent = "Cleared path highlight.";
 }
-function populateNodeDropdowns(apiGraph) {
-  const startSel = document.getElementById("startNode");
-  const endSel = document.getElementById("endNode");
-
-  if (!startSel || !endSel) return;
-
-  startSel.innerHTML = `<option value="">Start node...</option>`;
-  endSel.innerHTML = `<option value="">End node...</option>`;
-
-  (apiGraph.nodes ?? []).forEach((n) => {
-    const label = `${n.id} (${n.type ?? "?"})`;
-
-    const opt1 = document.createElement("option");
-    opt1.value = n.id;
-    opt1.textContent = label;
-    startSel.appendChild(opt1);
-
-    const opt2 = document.createElement("option");
-    opt2.value = n.id;
-    opt2.textContent = label;
-    endSel.appendChild(opt2);
-  });
-}
 
 export async function renderGraph() {
   const status = document.getElementById("status");
   status.textContent = "Loading...";
 
   const apiGraph = await fetchGraph();
-    populateNodeDropdowns(apiGraph);
+
   const elements = toCytoscapeElements(apiGraph);
 
 
@@ -153,6 +127,9 @@ export async function renderGraph() {
     cy = cytoscape({
       container: document.getElementById("cy"),
       elements,
+      wheelSensitivity: 0.3,
+      minZoom: 0.5,
+      maxZoom: 2,
       style: [
         {
           selector: "node",
