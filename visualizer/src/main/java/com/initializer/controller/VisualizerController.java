@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import com.initializer.graph.Node;
 import com.initializer.services.GraphEdgeDTO;
 import com.initializer.services.GraphService;
+import com.initializer.services.ShortestPathService;
+import com.initializer.services.AttackPathResult;
 
 
 // REST controller for exposing attack graph structure.
@@ -21,6 +23,9 @@ public class VisualizerController {
 
     @Autowired
     private GraphService graphService;
+
+    @Autowired
+    private ShortestPathService shortestPathService;
 
     
     // Health check endpoint.
@@ -44,5 +49,19 @@ public class VisualizerController {
         response.put("edges", edges);
 
         return ResponseEntity.ok(response);
+    }
+
+
+    // REST endpoint to compute and return the shortest attack path between two nodes 
+    // Expects 'source' and 'target' parameters.
+
+    @GetMapping("/path")
+    public ResponseEntity<AttackPathResult> getAttackPath(
+            @RequestParam String source,
+            @RequestParam String target) {
+
+        AttackPathResult result = shortestPathService.computeAttackPath(source, target);
+
+        return ResponseEntity.ok(result);
     }
 }
