@@ -49,6 +49,9 @@ This tool is designed to be an educational cybersecurity visualization platform.
     Returns a confirmation message indicating that the API is running
 - `GET /api/graph`
     Returns the full attack graph structure (nodes and edges) in JSON format
+- `GET /api/path?source={sourceId}&target={targetId}`
+    Computes and returns the shortest attack path between the specified source and target nodes, 
+    including ordered nodes, ordered edges, and total path cost
 
 
 ### Frontend Setup
@@ -73,7 +76,7 @@ This tool is designed to be an educational cybersecurity visualization platform.
 ## Contributor Guidelines
 
 - Use feature branches
-- Do not push directly to `main`
+- Do not push directly to `main` except for minor documentation updates
 - Changes should go through a Pull Request before merging
 - Commit messages should be clear and descriptive
 - At least one teammate should review and approve Pull Requests
