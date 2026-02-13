@@ -1,5 +1,19 @@
 import "./style.css";
-import { renderGraph } from "./graphView.js";
+import { renderGraph, computeAndShowPath, clearPath } from "./graphView.js";
+
+document.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("reloadBtn")
+    ?.addEventListener("click", () => renderGraph());
+
+  document.getElementById("computeBtn")
+    ?.addEventListener("click", () => computeAndShowPath());
+
+  document.getElementById("clearPathBtn")
+    ?.addEventListener("click", () => clearPath());
+
+  await renderGraph();
+});
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   const reloadBtn = document.getElementById("reloadBtn");
@@ -13,3 +27,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error(err);
   }
 });
+

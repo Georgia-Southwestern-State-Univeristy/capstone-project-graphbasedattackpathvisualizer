@@ -13,16 +13,18 @@ function toCytoscapeElements(apiGraph) {
     },
   }));
 
-  const edges = (apiGraph.edges ?? []).map((e, idx) => ({
-    data: {
-      id: `e${idx}-${e.source}->${e.target}`,
-      source: e.source,         // required
-      target: e.target,         // required
-      attackAction: e.attackAction ?? "",
-      weight: Number(e.weight ?? 1),
-      label: `${e.attackAction ?? ""} (${e.weight ?? 1})`,
-    },
-  }));
+const edges = (apiGraph.edges ?? []).map((e) => ({
+  data: {
+    // IMPORTANT: must match what we compute/highlight later
+    id: `${e.source}__${e.target}__${e.attackAction ?? ""}`,
+    source: e.source,
+    target: e.target,
+    attackAction: e.attackAction ?? "",
+    weight: Number(e.weight ?? 1),
+    label: `${e.attackAction ?? ""} (${e.weight ?? 1})`,
+  },
+}));
+
 
   return [...nodes, ...edges];
 }
@@ -32,13 +34,120 @@ async function fetchGraph() {
   if (!res.ok) throw new Error(`GET /api/graph failed: ${res.status}`);
   return res.json();
 }
+async function fetchAttackPath(source, target) {
+  const res = await fetch(`/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+  if (!res.ok) throw new Error(`GET /api/path failed: ${res.status}`);
+  return res.json();
+}
+
+function clearPathHighlighting() {
+  if (!cy) return;
+  cy.nodes().removeClass("pathNode");
+  cy.edges().removeClass("pathEdge");
+  cy.nodes().forEach((n) => n.removeData("orderLabel"));
+}
+
+function applyPathHighlight(pathResp) {
+  clearPathHighlighting();
+
+  // Validate
+  if (!Array.isArray(pathResp.traversalOrder)) {
+    throw new Error("Path response missing traversalOrder[]");
+  }
+  if (!Array.isArray(pathResp.pathEdges)) {
+    throw new Error("Path response missing pathEdges[]");
+  }
+
+  // Highlight nodes in traversal order
+  pathResp.traversalOrder.forEach((id, i) => {
+    const node = cy.getElementById(id);
+    if (!node.empty()) {
+      node.addClass("pathNode");
+      node.data("orderLabel", `${i + 1}: ${id}`);
+    }
+  });
+
+  // Highlight edges (exact match)
+  pathResp.pathEdges.forEach((e) => {
+    const edgeId = `${e.source}__${e.target}__${e.attackAction ?? ""}`;
+    const edge = cy.getElementById(edgeId);
+    if (!edge.empty()) {
+      edge.addClass("pathEdge");
+    }
+  });
+
+  const sel = cy.elements(".pathNode, .pathEdge");
+  if (sel.length > 0) cy.fit(sel, 60);
+}
+
+// EXPORT: called by your button
+export async function computeAndShowPath() {
+  const status = document.getElementById("status");
+
+  const start = document.getElementById("startNode")?.value;
+  const end = document.getElementById("endNode")?.value;
+
+  if (!start || !end) {
+    if (status) status.textContent = "Pick a start and end node.";
+    return;
+  }
+  if (!cy) {
+    if (status) status.textContent = "Graph not loaded yet.";
+    return;
+  }
+
+  if (status) status.textContent = "Computing shortest path...";
+
+  const pathResp = await fetchAttackPath(start, end);
+
+  // If your backend still returns nodes/edges/totalCost (AttackPathResult),
+  // you MUST convert backend to the DTO we discussed:
+  // { traversalOrder: [...], pathEdges: [...], totalCost: ... }
+  applyPathHighlight(pathResp);
+
+  if (status) {
+    status.textContent = `Path steps=${pathResp.traversalOrder.length}, totalCost=${pathResp.totalCost ?? "?"}`;
+  }
+}
+
+// optional export
+export function clearPath() {
+  clearPathHighlighting();
+  const status = document.getElementById("status");
+  if (status) status.textContent = "Cleared path highlight.";
+}
+function populateNodeDropdowns(apiGraph) {
+  const startSel = document.getElementById("startNode");
+  const endSel = document.getElementById("endNode");
+
+  if (!startSel || !endSel) return;
+
+  startSel.innerHTML = `<option value="">Start node...</option>`;
+  endSel.innerHTML = `<option value="">End node...</option>`;
+
+  (apiGraph.nodes ?? []).forEach((n) => {
+    const label = `${n.id} (${n.type ?? "?"})`;
+
+    const opt1 = document.createElement("option");
+    opt1.value = n.id;
+    opt1.textContent = label;
+    startSel.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = n.id;
+    opt2.textContent = label;
+    endSel.appendChild(opt2);
+  });
+}
 
 export async function renderGraph() {
   const status = document.getElementById("status");
   status.textContent = "Loading...";
 
   const apiGraph = await fetchGraph();
+    populateNodeDropdowns(apiGraph);
   const elements = toCytoscapeElements(apiGraph);
+
 
   if (!cy) {
     cy = cytoscape({
@@ -74,6 +183,27 @@ export async function renderGraph() {
             "target-arrow-shape": "triangle",
           },
         },
+        {
+  selector: "edge.pathEdge",
+  style: {
+    width: "mapData(weight, 1, 6, 6, 14)",
+    "line-color": "#facc15",        // bright yellow
+    "target-arrow-color": "#facc15",
+    "z-index": 9999
+  },
+},
+
+{
+  selector: "node.pathNode",
+  style: {
+    label: "data(orderLabel)",
+    "border-width": 5,
+    "border-color": "#facc15",
+    "background-color": "#fef08a",
+    "z-index": 9999
+  },
+},
+
       ],
       layout: {
         name: "cose",     // good default for graphs
@@ -99,4 +229,5 @@ export async function renderGraph() {
   }
 
   status.textContent = `Loaded ${apiGraph.nodes?.length ?? 0} nodes, ${apiGraph.edges?.length ?? 0} edges`;
+  
 }
