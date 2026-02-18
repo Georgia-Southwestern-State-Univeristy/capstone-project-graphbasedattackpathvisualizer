@@ -7,6 +7,8 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.springframework.stereotype.Service;
+import com.initializer.exception.InvalidNodeException;
+
 
 import com.initializer.graph.Edge;
 import com.initializer.graph.Node;
@@ -26,12 +28,13 @@ public class ShortestPathService {
     public AttackPathResult computeAttackPath(String sourceId, String targetId) {
 
         Node source = findNodeById(sourceId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid source node ID: " + sourceId));
+            .orElseThrow(() ->
+                    new InvalidNodeException("Invalid source node ID: " + sourceId));
 
         Node target = findNodeById(targetId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid target node ID: " + targetId));
+            .orElseThrow(() ->
+                    new InvalidNodeException("Invalid target node ID: " + targetId));
+
 
         DijkstraShortestPath<Node, Edge> dijkstra =
                 new DijkstraShortestPath<>(graph);
@@ -39,8 +42,9 @@ public class ShortestPathService {
         GraphPath<Node, Edge> path = dijkstra.getPath(source, target);
 
         if (path == null) {
-            throw new IllegalStateException(
+            throw new InvalidNodeException(
                     "No attack path exists between " + sourceId + " and " + targetId);
+
         }
 
         return new AttackPathResult(

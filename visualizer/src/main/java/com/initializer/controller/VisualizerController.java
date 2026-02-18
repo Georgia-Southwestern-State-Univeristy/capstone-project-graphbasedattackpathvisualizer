@@ -18,7 +18,7 @@ import com.initializer.services.AttackPathResult;
 // REST controller for exposing attack graph structure.
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(value = "/api", produces = "application/json")
 public class VisualizerController {
 
     @Autowired
