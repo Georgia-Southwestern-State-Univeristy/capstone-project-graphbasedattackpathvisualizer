@@ -6,82 +6,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>graphbasedattackwebsite</title>
   </head>
-  <body class="h-screen flex flex-col justify-Start bg-cyan-200">
-    <div>
-    <h1 class="text-center text-3xl font-bold mt-10 ">Graph Based Attack Visualizer</h1>
+  <body class="h-screen bg-slate-900 text-slate-200 overflow-hidden">
+
+  <div class="flex h-full">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="w-72 bg-slate-800 border-r border-slate-700 p-6 flex flex-col">
+
+      <h2 class="text-xl font-semibold mb-6">Mitigations</h2>
+
+      <div class="space-y-6 flex-1">
+
+        <!-- Email MFA -->
+        <div>
+          <label class="flex items-center justify-between cursor-pointer group">
+            <span class="font-medium group-hover:text-white transition">
+              Email MFA
+            </span>
+
+            <div class="relative">
+              <input id="email-mfa" type="checkbox" class="sr-only peer">
+
+              <div class="w-12 h-6 bg-slate-600 rounded-full
+                          peer-checked:bg-emerald-500
+                          transition-all duration-300
+                          shadow-inner"></div>
+
+             <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full
+                  shadow-md transition-all duration-300
+                  peer-checked:translate-x-6"></div>
+            </div>
+          </label>
+
+          <p class="text-sm text-slate-400 mt-1">
+           Enable/disable Email Multi-Factor Authentication
+          </p>
+        </div>
+
+        <!-- Web App Hardening -->
+        <div>
+          <label class="flex items-center justify-between cursor-pointer group">
+            <span class="font-medium group-hover:text-white transition">
+             Web App Hardening
+            </span>
+
+            <div class="relative">
+              <input id="web-hardening" type="checkbox" class="sr-only peer">
+
+              <div class="w-12 h-6 bg-slate-600 rounded-full
+                         peer-checked:bg-blue-500
+                         transition-all duration-300
+                         shadow-inner"></div>
+
+              <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full
+                         shadow-md transition-all duration-300
+                         peer-checked:translate-x-6"></div>
+            </div>
+          </label>
+        </div>
+
+        <!-- VPN MFA -->
+        <div>
+          <label class="flex items-center justify-between cursor-pointer group">
+            <span class="font-medium group-hover:text-white transition">
+             VPN / Remote Access MFA
+            </span>
+
+           <div class="relative">
+              <input id="vpn-mfa" type="checkbox" class="sr-only peer">
+
+              <div class="w-12 h-6 bg-slate-600 rounded-full
+                         peer-checked:bg-purple-500
+                         transition-all duration-300
+                         shadow-inner"></div>
+
+              <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full
+                          shadow-md transition-all duration-300
+                         peer-checked:translate-x-6"></div>
+           </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Buttons at bottom -->
+      <div class="space-y-3">
+
+        <button id="computeBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-lg font-medium">
+          Compute Attack Path
+        </button>
+
+        <button id="clearPathBtn"
+          class="w-full bg-slate-600 hover:bg-slate-700 transition px-4 py-2 rounded-lg font-medium">
+          Clear Path
+        </button>
+
+      </div>
+
+    </aside>
+
+    <!-- ================= MAIN AREA ================= -->
+    <div class="flex flex-col flex-1">
+
+  <!-- Header -->
+  <header class="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6">
+    <h1 class="text-2xl font-bold tracking-wide">
+      Graph-Based Attack Visualizer
+    </h1>
+
+    <div class="flex items-center gap-4">
+      <button id="reloadBtn"
+        class="bg-slate-700 hover:bg-slate-600 transition px-3 py-2 rounded-lg">
+        Reload Graph
+      </button>
+
+      <span id="status" class="text-sm text-slate-400"></span>
     </div>
-    <div class="mt-10 mx-20">
-<div class="w-full max-w-6xl mt-6 px-4">
-  <div class="flex items-center gap-2 mb-3">
-    <button id="reloadBtn" class="px-3 py-2 rounded bg-black text-white">
-      Reload Graph
-    </button>
-    <span id="status" class="text-sm text-gray-600"></span>
+  </header>
+
+  <!-- Graph -->
+  <main class="flex-1 p-6">
+
+    <div class="h-full bg-slate-800 rounded-xl shadow-lg p-4">
+      <div id="cy" class="w-full h-full"></div>
+    </div>
+
+  </main>
+
+</div>
+
+
   </div>
 
-  <div id="cy" class="w-full h-[650px] bg-white rounded shadow"></div>
-</div>
- <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; background-color: azure;"></div>
+  <script type="module" src="/src/main.js"></script>
 
-<button id="computeBtn" style="background:#2563eb; color:white; padding:8px 12px; border:none; border-radius:4px;">
-  Compute Attack Path
-</button>
+</body>
 
-<button id="clearPathBtn" style="background:#ccc; padding:8px 12px; border:none; border-radius:4px;">
-  Clear Path
-</button>
-
-    </div>
-
-<div class="inline-flex gap-2 items-center mt-20 ml-20">
-  <div class="relative inline-block w-11 h-5">
-    <input id="email-mfa" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-100 rounded-full checked:bg-slate-800 cursor-pointer transition-colors duration-300" />
-    <label for="email-mfa" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-full border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 peer-checked:border-slate-800 cursor-pointer">
-    </label>
-  </div>
-  <label for="email-mfa" class="text-slate-600 text-sm cursor-pointer">
-    <div>
-      <p class="font-medium">
-        Email MFA
-      </p>
-      <p class="text-slate-500">
-        Toggle to enable/disable Email Multi-Factor Authentication
-      </p>
-    </div>
-  </label>
-</div>
-<div class="inline-flex gap-2 items-center mt-1 ml-20">
-  <div class="relative inline-block w-11 h-5">
-    <input id="web-hardening" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-100 rounded-full checked:bg-slate-800 cursor-pointer transition-colors duration-300" />
-    <label for="web-hardening" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-full border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 peer-checked:border-slate-800 cursor-pointer">
-    </label>
-  </div>
-  <label for="web-hardening" class="text-slate-600 text-sm cursor-pointer">
-    <div>
-      <p class="font-medium">
-        Web App Hardening
-      </p>
-      <p class="text-slate-500">
-      </p>
-    </div>
-  </label>
-</div>
-<div class="inline-flex gap-2 items-center mt-3 ml-20">
-  <div class="relative inline-block w-11 h-5">
-    <input id="vpn-mfa" type="checkbox" class="peer appearance-none w-11 h-5 bg-slate-100 rounded-full checked:bg-slate-800 cursor-pointer transition-colors duration-300" />
-    <label for="vpn-mfa" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-full border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-6 peer-checked:border-slate-800 cursor-pointer">
-    </label>
-  </div>
-  <label for="vpn-mfa" class="text-slate-600 text-sm cursor-pointer">
-    <div>
-      <p class="font-medium">
-        VPN / Remote Access MFA
-      </p>
-      <p class="text-slate-500">
-      </p>
-    </div>
-  </label>
-</div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
 </html>
