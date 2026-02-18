@@ -36,8 +36,12 @@ async function fetchGraph() {
 }
 async function fetchAttackPath(source, target) {
   const res = await fetch(`/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
-  if (!res.ok) throw new Error(`GET /api/path failed: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    // Use backend error message if available
+    throw new Error(data.message || `Request failed with status ${res.status}`);
+  }
+  return data;
 }
 
 function clearPathHighlighting() {
@@ -102,8 +106,11 @@ export async function computeAndShowPath() {
     }
 
   } catch (err) {
-    if (status) status.textContent = "Error computing path.";
-    console.error(err);
+    if (status) {
+      status.textContent = `Error: ${err.message}`;
+  }
+  console.error(err);
+
   }
 }
 
