@@ -2,18 +2,15 @@ import cytoscape from "cytoscape";
 
 let cy = null;
 
-/* =======================
-   LABEL MAPPING
-======================= */
 function shortLabel(id) {
   const map = {
     attacker: "Attacker",
     webApp: "Web App",
     vpn: "VPN",
     employeeEmail: "Employee Email",
-    employeeWorkstation: "Employee Workstation",
-    identityProvider: "IdP",
-    adminAccount: "Admin",
+    employeeWorkstation: "Workstation",
+    identityProvider: "Identity Provider",
+    adminAccount: "Admin Account",
     customerDb: "Customer Database",
     fileServer: "File Server",
     thirdPartySaas: "SaaS"
@@ -21,35 +18,103 @@ function shortLabel(id) {
   return map[id] || id;
 }
 
-/* =======================
-   ELEMENT CONVERSION
-======================= */
+const NODE_DESCRIPTIONS = {
+  attacker: "The starting point of the simulation representing an external threat actor.",
+  webApp: "Public-facing company web application; a common entry point for exploits.",
+  vpn: "Remote access gateway providing entry into the internal corporate network.",
+  employeeEmail: "Corporate email accounts; primary targets for phishing and credential theft.",
+  employeeWorkstation: "Standard user endpoint used for internal lateral movement.",
+  identityProvider: "The IdP (like Okta or Azure AD) managing authentication and SSO.",
+  adminAccount: "High-privilege credentials capable of managing databases and servers.",
+  customerDb: "The ultimate target; contains sensitive customer PII and records.",
+  fileServer: "Internal storage containing shared documents and configuration files.",
+  thirdPartySaas: "External cloud services (SaaS) integrated with corporate identity."
+};
+
+const ATTACK_DETAILS = {
+  "Phishing / Credential Theft": {
+    desc: "Social engineering to trick employees into revealing credentials.",
+    rationale: "Relies on successful user interaction and convincing lures."
+  },
+  "Exploit Web App / Weak Login": {
+    desc: "Exploiting vulnerabilities in public-facing web applications or brute-forcing weak credentials.",
+    rationale: "Web apps are high-exposure targets requiring specific exploit payloads."
+  },
+  "Stolen VPN Credentials": {
+    desc: "Using compromised VPN accounts to gain a foothold in the internal network.",
+    rationale: "VPNs provide direct encrypted access; difficulty depends on MFA presence."
+  },
+  "Malware Delivery": {
+    desc: "Chaining vulnerabilities to execute malicious code on a target.",
+    rationale: "Requires moderate technical effort and user execution."
+  },
+  "Remote Login (RDP / SSH)": {
+    desc: "Using legitimate administrative protocols to move laterally between systems.",
+    rationale: "Commonly allowed in internal networks, making it a low-noise movement method."
+  },
+  "Credential Reuse": {
+    desc: "Applying obtained credentials to other internal systems.",
+    rationale: "Low-effort technique once an initial set is compromised."
+  },
+  "Password Reset / SSO Abuse": {
+    desc: "Abusing identity workflows to reset or hijack accounts.",
+    rationale: "Requires understanding identity system authentication flows."
+  },
+  "OAuth Token Theft / SSO Abuse": {
+    desc: "Stealing active session tokens to bypass authentication entirely.",
+    rationale: "Highly effective as it bypasses standard password-based MFA."
+  },
+  "Over-Privileged Role Assignment": {
+    desc: "Exploiting users or accounts with more permissions than necessary.",
+    rationale: "Configuration-based weakness that significantly lowers the barrier for attackers."
+  },
+  "Access Shared Drive": {
+    desc: "Gaining access to internal file servers and shared documentation.",
+    rationale: "Often weakly protected once the internal network is breached."
+  },
+  "Privilege Escalation / Credential Dumping": {
+    desc: "Extracting high-level credentials from memory or exploiting OS kernels.",
+    rationale: "Technical and noisy; requires local system access first."
+  },
+  "Direct Network Access": {
+    desc: "Bypassing internal controls to reach network resources.",
+    rationale: "Requires internal positioning and network awareness."
+  },
+  "Stored Credentials / Config Leak": {
+    desc: "Finding plain-text passwords in configuration files or scripts.",
+    rationale: "Purely dependent on discovery; very easy if documentation is poor."
+  },
+  "API Access / Data Sync": {
+    desc: "Using stolen API keys to extract data from cloud databases.",
+    rationale: "Targets the data layer directly, often bypassing traditional host security."
+  },
+  "Admin DB Access": {
+    desc: "Using full administrative rights to query or export the customer database.",
+    rationale: "The final objective; difficulty is minimal once admin status is achieved."
+  }
+};
+
 function toCytoscapeElements(apiGraph) {
   const nodes = (apiGraph.nodes ?? []).map((n) => ({
-    data: {
-      id: n.id,
-      type: n.type ?? "",
-      label: shortLabel(n.id),
-    },
+    data: { id: n.id, type: n.type ?? "", label: shortLabel(n.id) },
   }));
 
-  const edges = (apiGraph.edges ?? []).map((e) => ({
-    data: {
-      id: `${e.source}__${e.target}__${e.attackAction ?? ""}`,
-      source: e.source,
-      target: e.target,
-      attackAction: e.attackAction ?? "",
-      weight: Number(e.weight ?? 1),
-      label: `${e.attackAction ?? ""} (${e.weight ?? 1})`,
-    },
-  }));
-
+  const edges = (apiGraph.edges ?? []).map((e) => {
+    const rawAction = e.attackAction ?? "";
+    return {
+      data: {
+        id: `${e.source}__${e.target}__${rawAction}`,
+        source: e.source,
+        target: e.target,
+        attackAction: rawAction, 
+        weight: Number(e.weight ?? 1),
+        label: `${rawAction} (${e.weight ?? 1})`,
+      },
+    };
+  });
   return [...nodes, ...edges];
 }
 
-/* =======================
-   API
-======================= */
 async function fetchGraph() {
   const res = await fetch("/api/graph");
   if (!res.ok) throw new Error(`GET /api/graph failed: ${res.status}`);
@@ -57,17 +122,12 @@ async function fetchGraph() {
 }
 
 async function fetchAttackPath(source, target) {
-  const res = await fetch(
-    `/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`
-  );
+  const res = await fetch(`/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || `Request failed`);
   return data;
 }
 
-/* =======================
-   PATH HIGHLIGHTING
-======================= */
 function clearPathHighlighting() {
   if (!cy) return;
   cy.nodes().removeClass("pathNode");
@@ -77,7 +137,6 @@ function clearPathHighlighting() {
 
 function applyPathHighlight(pathResp) {
   clearPathHighlighting();
-
   pathResp.nodes.forEach((nodeObj, i) => {
     const node = cy.getElementById(nodeObj.id);
     if (!node.empty()) {
@@ -85,37 +144,94 @@ function applyPathHighlight(pathResp) {
       node.data("orderLabel", `${i + 1}`);
     }
   });
-
   for (let i = 0; i < pathResp.nodes.length - 1; i++) {
     const source = pathResp.nodes[i].id;
     const target = pathResp.nodes[i + 1].id;
-
     cy.edges().forEach((edge) => {
-      if (
-        edge.data("source") === source &&
-        edge.data("target") === target
-      ) {
+      if (edge.data("source") === source && edge.data("target") === target) {
         edge.addClass("pathEdge");
       }
     });
   }
 }
 
-/* =======================
-   FIXED POSITIONS (UNCHANGED)
-======================= */
+export function showDetailCard(data, type) {
+  const card = document.getElementById("detailCard");
+  const content = document.getElementById("cardContent");
+  const title = document.getElementById("cardTitle");
+  if (!card) return;
+
+  card.classList.remove("hidden");
+  // This line is now safe again
+  if (cy) { cy.resize(); cy.fit(undefined, 30); }
+
+  // Title: Clean and proportional
+  title.className = "text-sm font-bold text-slate-400 uppercase tracking-widest";
+
+  if (type === "node") {
+    const desc = NODE_DESCRIPTIONS[data.id] || "Internal system asset.";
+    title.textContent = "Node Inspector";
+    content.innerHTML = `
+      <div class="space-y-4">
+        <section>
+          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Identifier</label>
+          <div class="text-base text-white font-semibold">${data.label}</div>
+        </section>
+        <section>
+          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
+          <p class="text-sm text-slate-300 leading-relaxed">${desc}</p>
+        </section>
+      </div>
+    `;
+  } else {
+    const details = ATTACK_DETAILS[data.attackAction] || { 
+      desc: "Information is being updated.", 
+      rationale: "N/A" 
+    };
+    title.textContent = "Edge Inspector";
+    
+    content.innerHTML = `
+      <div class="space-y-4">
+        <section>
+          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Method</label>
+          <div class="text-base text-rose-500 font-semibold leading-tight">${data.attackAction}</div>
+        </section>
+        
+        <section>
+          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
+          <p class="text-sm text-slate-300 leading-relaxed">${details.desc}</p>
+        </section>
+
+        <div class="pt-10 space-y-3 border-t border-slate-700/30">
+          <div class="p-3 bg-slate-900/60 rounded border border-slate-700/50">
+            <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Base Cost</label>
+            <span class="text-white font-mono font-bold text-lg">${data.weight}</span>
+          </div>
+          
+          <section class="p-3 bg-amber-500/5 border border-amber-500/20 rounded">
+            <label class="text-[10px] text-amber-500 font-bold uppercase">Rationale</label>
+            <p class="text-[11px] text-slate-400 mt-1 italic leading-snug">${details.rationale}</p>
+          </section>
+        </div>
+      </div>
+    `;
+  }
+}
+
+export function hideDetailCard() {
+  const card = document.getElementById("detailCard");
+  if (card) card.classList.add("hidden");
+  if (cy) { cy.resize(); cy.fit(undefined, 30); }
+}
+
 const FIXED_POSITIONS = {
-
   attacker: { x: 70, y: 301 },
-
   webApp: { x: 350, y: 120 },
   fileServer: { x: 975, y: 120 },
   customerDb: { x: 1350, y: 300 },
-
   vpn: { x: 350, y: 300 },
   employeeWorkstation: { x: 650, y: 301 },
   adminAccount: { x: 975, y: 400 },
-
   employeeEmail: { x: 350, y: 480 },
   identityProvider: { x: 650, y: 481 },
   thirdPartySaas: { x: 820, y: 620 }
@@ -124,42 +240,63 @@ const FIXED_POSITIONS = {
 function applyFixedPositions() {
   Object.entries(FIXED_POSITIONS).forEach(([id, pos]) => {
     const node = cy.getElementById(id);
-    if (!node.empty()) {
-      node.position(pos);
-      node.unlock();
-    }
+    if (!node.empty()) { node.position(pos); node.unlock(); }
   });
 }
 
-/* =======================
-   PUBLIC FUNCTIONS
-======================= */
 export async function computeAndShowPath() {
   const status = document.getElementById("status");
-
+  const pathResult = document.getElementById("pathResult");
+  const costValue = document.getElementById("totalCostValue");
+  
   try {
-    status.textContent = "Computing shortest path...";
+    status.textContent = "Computing...";
     const pathResp = await fetchAttackPath("attacker", "customerDb");
     applyPathHighlight(pathResp);
-    status.textContent = `Shortest path computed. Total cost = ${pathResp.totalCost}`;
-  } catch (err) {
+    
+    status.textContent = "Path Found";
+    status.className = "font-mono text-rose-500 uppercase tracking-widest animate-pulse font-bold drop-shadow-[0_0_10px_rgba(244,63,94,0.7)]";
+
+    if (pathResult && costValue) {
+      pathResult.classList.remove("hidden");
+      const targetCost = Number(pathResp.totalCost) || 0;
+      
+      // 600ms = Lightning fast spin and snap
+      animateValue(costValue, 0, targetCost, 600); 
+    }
+  } catch (err) { 
     status.textContent = `Error: ${err.message}`;
-    console.error(err);
   }
 }
 
 export function clearPath() {
   clearPathHighlighting();
+  
+  const pathResult = document.getElementById("pathResult");
   const status = document.getElementById("status");
-  if (status) status.textContent = "Cleared path highlight.";
+  const costValue = document.getElementById("totalCostValue");
+
+  if (pathResult) pathResult.classList.add("hidden");
+  if (costValue) costValue.innerHTML = "0"; // Reset the wheel
+  
+  if (status) {
+    status.textContent = "System Ready";
+    status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+  }
 }
 
-/* =======================
-   RENDER GRAPH
-======================= */
 export async function renderGraph() {
   const status = document.getElementById("status");
-  if (status) status.textContent = "Loading...";
+  const pathResult = document.getElementById("pathResult");
+  
+  // 1. Reset UI State
+  if (pathResult) pathResult.classList.add("hidden");
+  
+  if (status) {
+    status.textContent = "Loading...";
+    // Reset to a neutral state while fetching data
+    status.className = "font-mono text-slate-500 uppercase tracking-widest transition-all duration-500";
+  }
 
   const apiGraph = await fetchGraph();
   const elements = toCytoscapeElements(apiGraph);
@@ -169,192 +306,104 @@ export async function renderGraph() {
       container: document.getElementById("cy"),
       elements,
       wheelSensitivity: 0.3,
-      minZoom: 0.5,
-      maxZoom: 2,
       layout: { name: "preset" },
       style: [
-
-        /* DEFAULT NODE STYLE */
-        {
-          selector: "node",
-          style: {
-            label: "data(label)",
-            shape: "ellipse",
-            "text-valign": "center",
-            "text-halign": "center",
-            "text-wrap": "wrap",
-            "text-max-width": 90,
-            "line-height": 1.3,
-            "font-size": 16,
-            "font-weight": 500,
-            color: "#ffffff",
-            width: 100,
-            height: 100,
-            "border-width": 2,
+        { 
+          selector: "node", 
+          style: { 
+            label: "data(label)", 
+            shape: "ellipse", 
+            "text-valign": "center", 
+            "text-halign": "center", 
+            "text-wrap": "wrap", 
+            "text-max-width": 90, 
+            "line-height": 1.4, 
+            "font-size": 15, 
+            color: "#ffffff", 
+            width: 110, 
+            height: 110, 
+            "border-width": 2, 
             "border-color": "#1e293b",
-
             "overlay-opacity": 0,
-          }
-          
+            "transition-property": "width, height, border-width, border-color, font-size",
+            "transition-duration": "0.2s"
+          } 
         },
-
-        {
-          selector: "node:selected",
-          style: {
-            "overlay-opacity": 0
-          }
+        { selector: 'node[id = "attacker"]', style: { "background-color": "#a51433" } },
+        { selector: 'node[id = "webApp"]', style: { "background-color": "#2563eb" } },
+        { selector: 'node[id = "vpn"]', style: { "background-color": "#7c3aed" } },
+        { selector: 'node[id = "employeeEmail"]', style: { "background-color": "#ea580c" } },
+        { selector: 'node[id = "employeeWorkstation"]', style: { "background-color": "#0891b2" } },
+        { selector: 'node[id = "identityProvider"]', style: { "background-color": "#ca8a04" } },
+        { selector: 'node[id = "adminAccount"]', style: { "background-color": "#b35d81" } },
+        { selector: 'node[id = "fileServer"]', style: { "background-color": "#0f766e" } },
+        { selector: 'node[id = "thirdPartySaas"]', style: { "background-color": "#4338ca" } },
+        { selector: 'node[id = "customerDb"]', style: { "background-color": "#16a34a" } },
+        { 
+          selector: "edge", 
+          style: { 
+            label: "data(label)", 
+            "font-size": 9, 
+            color: "#cbd5e1", 
+            "text-rotation": "autorotate", 
+            width: 2, 
+            "curve-style": "bezier", 
+            "line-color": "#64748b", 
+            "target-arrow-shape": "triangle", 
+            "overlay-opacity": 0,
+            "transition-property": "width, line-color, target-arrow-color",
+            "transition-duration": "0.2s"
+          } 
         },
-        {
-          selector: "node:active",
-          style: {
-           "overlay-opacity": 0
-          }
+        { selector: "edge.pathEdge", style: { width: 8, "line-color": "#facc15", "target-arrow-color": "#facc15", "z-index": 9999 } },
+        { selector: "node.pathNode", style: { label: "data(orderLabel)", "border-width": 6, "border-color": "#facc15", "background-color": "#fef08a", color: "#000", "z-index": 9999 } },
+        { selector: "node.hovered", style: { width: 150, height: 150, "font-size": 25, "border-width": 4, "border-color": "#ffffff", "z-index": 9999 } },
+        { 
+          selector: "node:selected", 
+          style: { 
+            width: 125, 
+            height: 125, 
+            "border-width": 6, 
+            "border-color": "#ffffff", 
+            "z-index": 9999 
+          } 
         },
-
-        /* ATTACKER */
-        {
-          selector: 'node[id = "attacker"]',
-          style: { "background-color": "#e11d48" }   // crimson
-        },
-
-        /* WEB APP */
-        {
-          selector: 'node[id = "webApp"]',
-          style: { "background-color": "#2563eb" }   // blue
-        },
-
-        /* VPN */
-        {
-          selector: 'node[id = "vpn"]',
-          style: { "background-color": "#7c3aed" }   // purple
-        },
-
-        /* EMAIL */
-        {
-          selector: 'node[id = "employeeEmail"]',
-          style: { "background-color": "#ea580c" }   // orange
-        },
-
-        /* WORKSTATION */
-        {
-          selector: 'node[id = "employeeWorkstation"]',
-          style: { "background-color": "#0891b2" }   // teal
-        },
-
-        /* IDENTITY PROVIDER */
-        {
-          selector: 'node[id = "identityProvider"]',
-          style: { "background-color": "#ca8a04" }   // gold
-        },
-
-        /* ADMIN */
-        {
-          selector: 'node[id = "adminAccount"]',
-          style: { "background-color": "#be185d" }   // magenta
-        },
-
-        /* FILE SERVER */
-        {
-          selector: 'node[id = "fileServer"]',
-          style: { "background-color": "#0f766e" }   // dark aqua
-        },
-
-        /* THIRD PARTY SAAS */
-        {
-          selector: 'node[id = "thirdPartySaas"]',
-          style: { "background-color": "#4338ca" }   // indigo
-        },
-
-        /* CUSTOMER DB */
-        {
-          selector: 'node[id = "customerDb"]',
-          style: { "background-color": "#16a34a" }   // green
-        },
-
-
-
-        /* DEFAULT EDGE */
-        {
-          selector: "edge",
-          style: {
-            label: "data(label)",
-            "font-size": 9,
-            color: "#cbd5e1",
-            "text-rotation": "autorotate",
-            width: 2,
-            "curve-style": "bezier",
-            "line-color": "#64748b",
-            "target-arrow-shape": "triangle",
-            "target-arrow-color": "#64748b",
-          }
-        },
-
-        /* PATH EDGE */
-        {
-          selector: "edge.pathEdge",
-          style: {
-            width: 8,
-            "line-color": "#facc15",
-            "target-arrow-color": "#facc15",
-            "z-index": 9999
-          }
-        },
-
-        /* PATH NODE */
-        {
-          selector: "node.pathNode",
-          style: {
-            label: "data(orderLabel)",
-            "border-width": 6,
-            "border-color": "#facc15",
-            "background-color": "#fef08a",
-            color: "#000",
-            "z-index": 9999
-          }
-        },
-
-        /* HOVER */
-        {
-          selector: "node.hovered",
-          style: {
-            width: 150,
-            height: 150,
-            "font-size": 23,
-
-            "text-max-width": 145,   // 🔥 this fixes stacking
-            "line-height": 1.3,
-
-            "border-width": 5,
-            "border-color": "#fbfbfb",
-            "z-index": 9999,
-
-            "transition-property": "width height font-size border-width text-max-width",
-            "transition-duration": "200ms"
-          }
+        { 
+          selector: "edge.edgeHovered", 
+          style: { 
+            width: 4, 
+            "line-color": "#ffffff", 
+            "target-arrow-color": "#ffffff", 
+            "arrow-scale": 1.2,
+            "z-index": 999 
+          } 
         }
       ]
     });
 
-    /* EVENTS (NO DUPLICATES) */
+    document.getElementById("closeCard").onclick = hideDetailCard;
 
-    cy.on("mouseover", "node", (evt) => {
-      if (!evt.target.hasClass("dragging")) {
-        evt.target.addClass("hovered");
+    cy.on("tap", "node", (evt) => {
+      cy.nodes().unselect(); 
+      evt.target.select(); 
+      showDetailCard(evt.target.data(), "node");
+    });
+
+    cy.on("tap", "edge", (evt) => {
+      showDetailCard(evt.target.data(), "edge");
+    });
+
+    cy.on("tap", (evt) => {
+      if (evt.target === cy) {
+        cy.nodes().unselect();
+        hideDetailCard();
       }
     });
 
-    cy.on("mouseout", "node", (evt) => {
-      evt.target.removeClass("hovered");
-    });
-
-    cy.on("grab", "node", (evt) => {
-      evt.target.addClass("dragging");
-      evt.target.removeClass("hovered");
-    });
-
-    cy.on("free", "node", (evt) => {
-      evt.target.removeClass("dragging");
-    });
+    cy.on("mouseover", "node", (evt) => evt.target.addClass("hovered"));
+    cy.on("mouseout", "node", (evt) => evt.target.removeClass("hovered"));
+    cy.on("mouseover", "edge", (evt) => evt.target.addClass("edgeHovered"));
+    cy.on("mouseout", "edge", (evt) => evt.target.removeClass("edgeHovered"));
 
   } else {
     cy.elements().remove();
@@ -363,20 +412,46 @@ export async function renderGraph() {
 
   applyFixedPositions();
 
-  if (status) {
-    status.textContent = `Loaded ${apiGraph.nodes?.length ?? 0} nodes, ${apiGraph.edges?.length ?? 0} edges`;
-  }
-
-  setTimeout(() => {
-    if (cy) {
-      cy.resize();
-      cy.fit(undefined, 40);
-      cy.zoom(cy.zoom() * 0.99);
-      cy.center();
-    }
+  setTimeout(() => { 
+    if (cy) { 
+      cy.resize(); 
+      cy.fit(undefined, 30); 
+      
+      // 2. Final Status: System Ready (Green Glow)
+      if (status) {
+        status.textContent = "System Ready";
+        status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-500";
+      }
+    } 
   }, 200);
 }
 
+const container = document.getElementById('cy'); 
+if (container) {
+  new ResizeObserver(() => {
+    if (cy) { cy.resize(); cy.fit(undefined, 30); }
+  }).observe(container);
+}
 
-
-
+function animateValue(obj, start, end, duration) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    
+    // Cubic Out Easing: Fast start, very quick snap at the end
+    // Formula: 1 - Math.pow(1 - progress, 3)
+    const fastSnap = 1 - Math.pow(1 - progress, 3);
+    
+    const current = Math.floor(fastSnap * (end - start) + start);
+    
+    obj.innerHTML = current;
+    
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    } else {
+      obj.innerHTML = end; // Final snap
+    }
+  };
+  window.requestAnimationFrame(step);
+}
