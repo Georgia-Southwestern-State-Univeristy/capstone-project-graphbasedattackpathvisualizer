@@ -2,21 +2,7 @@ import cytoscape from "cytoscape";
 
 let cy = null;
 
-function shortLabel(id) {
-  const map = {
-    attacker: "Attacker",
-    webApp: "Web App",
-    vpn: "VPN",
-    employeeEmail: "Employee Email",
-    employeeWorkstation: "Workstation",
-    identityProvider: "Identity Provider",
-    adminAccount: "Admin Account",
-    customerDb: "Customer Database",
-    fileServer: "File Server",
-    thirdPartySaas: "SaaS"
-  };
-  return map[id] || id;
-}
+// --- CONFIGURATION & DATA MAPS ---
 
 const NODE_DESCRIPTIONS = {
   attacker: "The starting point of the simulation representing an external threat actor.",
@@ -94,6 +80,37 @@ const ATTACK_DETAILS = {
   }
 };
 
+const FIXED_POSITIONS = {
+  attacker: { x: 70, y: 301 },
+  webApp: { x: 350, y: 120 },
+  fileServer: { x: 975, y: 120 },
+  customerDb: { x: 1350, y: 300 },
+  vpn: { x: 350, y: 300 },
+  employeeWorkstation: { x: 650, y: 301 },
+  adminAccount: { x: 975, y: 400 },
+  employeeEmail: { x: 350, y: 480 },
+  identityProvider: { x: 650, y: 481 },
+  thirdPartySaas: { x: 820, y: 620 }
+};
+
+// --- UTILITY FUNCTIONS ---
+
+function shortLabel(id) {
+  const map = {
+    attacker: "Attacker",
+    webApp: "Web App",
+    vpn: "VPN",
+    employeeEmail: "Employee Email",
+    employeeWorkstation: "Workstation",
+    identityProvider: "Identity Provider",
+    adminAccount: "Admin Account",
+    customerDb: "Customer Database",
+    fileServer: "File Server",
+    thirdPartySaas: "SaaS"
+  };
+  return map[id] || id;
+}
+
 function toCytoscapeElements(apiGraph) {
   const nodes = (apiGraph.nodes ?? []).map((n) => ({
     data: { id: n.id, type: n.type ?? "", label: shortLabel(n.id) },
@@ -106,7 +123,7 @@ function toCytoscapeElements(apiGraph) {
         id: `${e.source}__${e.target}__${rawAction}`,
         source: e.source,
         target: e.target,
-        attackAction: rawAction, 
+        attackAction: rawAction,
         weight: Number(e.weight ?? 1),
         label: `${rawAction} (${e.weight ?? 1})`,
       },
@@ -114,6 +131,25 @@ function toCytoscapeElements(apiGraph) {
   });
   return [...nodes, ...edges];
 }
+
+function animateValue(obj, start, end, duration) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const fastSnap = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(fastSnap * (end - start) + start);
+    obj.innerHTML = current;
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    } else {
+      obj.innerHTML = end;
+    }
+  };
+  window.requestAnimationFrame(step);
+}
+
+// --- API FETCHERS ---
 
 async function fetchGraph() {
   const res = await fetch("/api/graph");
@@ -127,6 +163,8 @@ async function fetchAttackPath(source, target) {
   if (!res.ok) throw new Error(data.message || `Request failed`);
   return data;
 }
+
+// --- PATH HIGHLIGHTING ---
 
 function clearPathHighlighting() {
   if (!cy) return;
@@ -155,6 +193,8 @@ function applyPathHighlight(pathResp) {
   }
 }
 
+// --- CARD UI EXPORTS ---
+
 export function showDetailCard(data, type) {
   const card = document.getElementById("detailCard");
   const content = document.getElementById("cardContent");
@@ -162,10 +202,8 @@ export function showDetailCard(data, type) {
   if (!card) return;
 
   card.classList.remove("hidden");
-  // This line is now safe again
   if (cy) { cy.resize(); cy.fit(undefined, 30); }
 
-  // Title: Clean and proportional
   title.className = "text-sm font-bold text-slate-400 uppercase tracking-widest";
 
   if (type === "node") {
@@ -184,30 +222,26 @@ export function showDetailCard(data, type) {
       </div>
     `;
   } else {
-    const details = ATTACK_DETAILS[data.attackAction] || { 
-      desc: "Information is being updated.", 
-      rationale: "N/A" 
+    const details = ATTACK_DETAILS[data.attackAction] || {
+      desc: "Information is being updated.",
+      rationale: "N/A"
     };
     title.textContent = "Edge Inspector";
-    
     content.innerHTML = `
       <div class="space-y-4">
         <section>
           <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Method</label>
           <div class="text-base text-rose-500 font-semibold leading-tight">${data.attackAction}</div>
         </section>
-        
         <section>
           <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
           <p class="text-sm text-slate-300 leading-relaxed">${details.desc}</p>
         </section>
-
         <div class="pt-10 space-y-3 border-t border-slate-700/30">
           <div class="p-3 bg-slate-900/60 rounded border border-slate-700/50">
             <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Base Cost</label>
             <span class="text-white font-mono font-bold text-lg">${data.weight}</span>
           </div>
-          
           <section class="p-3 bg-amber-500/5 border border-amber-500/20 rounded">
             <label class="text-[10px] text-amber-500 font-bold uppercase">Rationale</label>
             <p class="text-[11px] text-slate-400 mt-1 italic leading-snug">${details.rationale}</p>
@@ -224,18 +258,7 @@ export function hideDetailCard() {
   if (cy) { cy.resize(); cy.fit(undefined, 30); }
 }
 
-const FIXED_POSITIONS = {
-  attacker: { x: 70, y: 301 },
-  webApp: { x: 350, y: 120 },
-  fileServer: { x: 975, y: 120 },
-  customerDb: { x: 1350, y: 300 },
-  vpn: { x: 350, y: 300 },
-  employeeWorkstation: { x: 650, y: 301 },
-  adminAccount: { x: 975, y: 400 },
-  employeeEmail: { x: 350, y: 480 },
-  identityProvider: { x: 650, y: 481 },
-  thirdPartySaas: { x: 820, y: 620 }
-};
+// --- LOGIC EXPORTS ---
 
 function applyFixedPositions() {
   Object.entries(FIXED_POSITIONS).forEach(([id, pos]) => {
@@ -248,37 +271,29 @@ export async function computeAndShowPath() {
   const status = document.getElementById("status");
   const pathResult = document.getElementById("pathResult");
   const costValue = document.getElementById("totalCostValue");
-  
   try {
     status.textContent = "Computing...";
     const pathResp = await fetchAttackPath("attacker", "customerDb");
     applyPathHighlight(pathResp);
-    
     status.textContent = "Path Found";
     status.className = "font-mono text-rose-500 uppercase tracking-widest animate-pulse font-bold drop-shadow-[0_0_10px_rgba(244,63,94,0.7)]";
-
     if (pathResult && costValue) {
       pathResult.classList.remove("hidden");
       const targetCost = Number(pathResp.totalCost) || 0;
-      
-      // 600ms = Lightning fast spin and snap
-      animateValue(costValue, 0, targetCost, 600); 
+      animateValue(costValue, 0, targetCost, 600);
     }
-  } catch (err) { 
+  } catch (err) {
     status.textContent = `Error: ${err.message}`;
   }
 }
 
 export function clearPath() {
   clearPathHighlighting();
-  
   const pathResult = document.getElementById("pathResult");
   const status = document.getElementById("status");
   const costValue = document.getElementById("totalCostValue");
-
   if (pathResult) pathResult.classList.add("hidden");
-  if (costValue) costValue.innerHTML = "0"; // Reset the wheel
-  
+  if (costValue) costValue.innerHTML = "0";
   if (status) {
     status.textContent = "System Ready";
     status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
@@ -288,13 +303,9 @@ export function clearPath() {
 export async function renderGraph() {
   const status = document.getElementById("status");
   const pathResult = document.getElementById("pathResult");
-  
-  // 1. Reset UI State
   if (pathResult) pathResult.classList.add("hidden");
-  
   if (status) {
     status.textContent = "Loading...";
-    // Reset to a neutral state while fetching data
     status.className = "font-mono text-slate-500 uppercase tracking-widest transition-all duration-500";
   }
 
@@ -308,26 +319,26 @@ export async function renderGraph() {
       wheelSensitivity: 0.3,
       layout: { name: "preset" },
       style: [
-        { 
-          selector: "node", 
-          style: { 
-            label: "data(label)", 
-            shape: "ellipse", 
-            "text-valign": "center", 
-            "text-halign": "center", 
-            "text-wrap": "wrap", 
-            "text-max-width": 90, 
-            "line-height": 1.4, 
-            "font-size": 15, 
-            color: "#ffffff", 
-            width: 110, 
-            height: 110, 
-            "border-width": 2, 
+        {
+          selector: "node",
+          style: {
+            label: "data(label)",
+            shape: "ellipse",
+            "text-valign": "center",
+            "text-halign": "center",
+            "text-wrap": "wrap",
+            "text-max-width": 90,
+            "line-height": 1.4,
+            "font-size": 15,
+            color: "#ffffff",
+            width: 110,
+            height: 110,
+            "border-width": 2,
             "border-color": "#1e293b",
             "overlay-opacity": 0,
             "transition-property": "width, height, border-width, border-color, font-size",
             "transition-duration": "0.2s"
-          } 
+          }
         },
         { selector: 'node[id = "attacker"]', style: { "background-color": "#a51433" } },
         { selector: 'node[id = "webApp"]', style: { "background-color": "#2563eb" } },
@@ -339,44 +350,44 @@ export async function renderGraph() {
         { selector: 'node[id = "fileServer"]', style: { "background-color": "#0f766e" } },
         { selector: 'node[id = "thirdPartySaas"]', style: { "background-color": "#4338ca" } },
         { selector: 'node[id = "customerDb"]', style: { "background-color": "#16a34a" } },
-        { 
-          selector: "edge", 
-          style: { 
-            label: "data(label)", 
-            "font-size": 9, 
-            color: "#cbd5e1", 
-            "text-rotation": "autorotate", 
-            width: 2, 
-            "curve-style": "bezier", 
-            "line-color": "#64748b", 
-            "target-arrow-shape": "triangle", 
+        {
+          selector: "edge",
+          style: {
+            label: "data(label)",
+            "font-size": 9,
+            color: "#cbd5e1",
+            "text-rotation": "autorotate",
+            width: 2,
+            "curve-style": "bezier",
+            "line-color": "#64748b",
+            "target-arrow-shape": "triangle",
             "overlay-opacity": 0,
             "transition-property": "width, line-color, target-arrow-color",
             "transition-duration": "0.2s"
-          } 
+          }
         },
         { selector: "edge.pathEdge", style: { width: 8, "line-color": "#facc15", "target-arrow-color": "#facc15", "z-index": 9999 } },
         { selector: "node.pathNode", style: { label: "data(orderLabel)", "border-width": 6, "border-color": "#facc15", "background-color": "#fef08a", color: "#000", "z-index": 9999 } },
         { selector: "node.hovered", style: { width: 150, height: 150, "font-size": 25, "border-width": 4, "border-color": "#ffffff", "z-index": 9999 } },
-        { 
-          selector: "node:selected", 
-          style: { 
-            width: 125, 
-            height: 125, 
-            "border-width": 6, 
-            "border-color": "#ffffff", 
-            "z-index": 9999 
-          } 
+        {
+          selector: "node:selected",
+          style: {
+            width: 125,
+            height: 125,
+            "border-width": 6,
+            "border-color": "#ffffff",
+            "z-index": 9999
+          }
         },
-        { 
-          selector: "edge.edgeHovered", 
-          style: { 
-            width: 4, 
-            "line-color": "#ffffff", 
-            "target-arrow-color": "#ffffff", 
+        {
+          selector: "edge.edgeHovered",
+          style: {
+            width: 4,
+            "line-color": "#ffffff",
+            "target-arrow-color": "#ffffff",
             "arrow-scale": 1.2,
-            "z-index": 999 
-          } 
+            "z-index": 999
+          }
         }
       ]
     });
@@ -384,8 +395,8 @@ export async function renderGraph() {
     document.getElementById("closeCard").onclick = hideDetailCard;
 
     cy.on("tap", "node", (evt) => {
-      cy.nodes().unselect(); 
-      evt.target.select(); 
+      cy.nodes().unselect();
+      evt.target.select();
       showDetailCard(evt.target.data(), "node");
     });
 
@@ -404,7 +415,6 @@ export async function renderGraph() {
     cy.on("mouseout", "node", (evt) => evt.target.removeClass("hovered"));
     cy.on("mouseover", "edge", (evt) => evt.target.addClass("edgeHovered"));
     cy.on("mouseout", "edge", (evt) => evt.target.removeClass("edgeHovered"));
-
   } else {
     cy.elements().remove();
     cy.add(elements);
@@ -412,46 +422,23 @@ export async function renderGraph() {
 
   applyFixedPositions();
 
-  setTimeout(() => { 
-    if (cy) { 
-      cy.resize(); 
-      cy.fit(undefined, 30); 
-      
-      // 2. Final Status: System Ready (Green Glow)
+  setTimeout(() => {
+    if (cy) {
+      cy.resize();
+      cy.fit(undefined, 30);
       if (status) {
         status.textContent = "System Ready";
         status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-500";
       }
-    } 
+    }
   }, 200);
 }
 
-const container = document.getElementById('cy'); 
+// --- OBSERVERS ---
+
+const container = document.getElementById('cy');
 if (container) {
   new ResizeObserver(() => {
     if (cy) { cy.resize(); cy.fit(undefined, 30); }
   }).observe(container);
-}
-
-function animateValue(obj, start, end, duration) {
-  let startTimestamp = null;
-  const step = (timestamp) => {
-    if (!startTimestamp) startTimestamp = timestamp;
-    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    
-    // Cubic Out Easing: Fast start, very quick snap at the end
-    // Formula: 1 - Math.pow(1 - progress, 3)
-    const fastSnap = 1 - Math.pow(1 - progress, 3);
-    
-    const current = Math.floor(fastSnap * (end - start) + start);
-    
-    obj.innerHTML = current;
-    
-    if (progress < 1) {
-      window.requestAnimationFrame(step);
-    } else {
-      obj.innerHTML = end; // Final snap
-    }
-  };
-  window.requestAnimationFrame(step);
 }

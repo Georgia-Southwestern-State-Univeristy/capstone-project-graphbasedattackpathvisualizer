@@ -1,38 +1,39 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Graph-Based Attack Visualizer</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graph-Based Attack Visualizer</title>
 
-    <style>
-  /* Slide in from top and fade in */
-  @keyframes slideIn {
-    0% { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
+  <style>
+    /* Slide in from top and fade in */
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
 
-  /* Subtle glowing border pulse */
-  @keyframes borderPulse {
-    0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.4); }
-    50% { box-shadow: 0 0 15px 2px rgba(244, 63, 94, 0.2); border-color: rgba(244, 63, 94, 0.7); }
-    100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.4); }
-  }
+    /* Subtle glowing border pulse */
+    @keyframes borderPulse {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.4); }
+      50% { box-shadow: 0 0 15px 2px rgba(244, 63, 94, 0.2); border-color: rgba(244, 63, 94, 0.7); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.4); }
+    }
 
-  .animate-in {
-    animation: slideIn 0.4s ease-out forwards;
-  }
+    .animate-in {
+      animation: slideIn 0.4s ease-out forwards;
+    }
 
-  .pulse-red {
-    animation: borderPulse 2s infinite ease-in-out;
-  }
-</style>
-  </head>
-  <body class="h-screen bg-slate-900 text-slate-200 overflow-hidden text-[11px]">
+    .pulse-red {
+      animation: borderPulse 2s infinite ease-in-out;
+    }
+  </style>
+</head>
 
+<body class="h-screen bg-slate-900 text-slate-200 overflow-hidden text-[11px]">
   <div class="flex h-full">
     <aside class="w-52 bg-slate-800 border-r border-slate-700 p-4 flex flex-col shrink-0">
       <h2 class="text-lg font-semibold mb-6 text-white uppercase tracking-wider">Mitigations</h2>
+      
       <div class="space-y-6 flex-1">
         <div>
           <label class="flex items-center justify-between cursor-pointer group">
@@ -44,6 +45,7 @@
             </div>
           </label>
         </div>
+        
         <div>
           <label class="flex items-center justify-between cursor-pointer group">
             <span class="font-medium group-hover:text-white transition">Web App Hardening</span>
@@ -66,25 +68,24 @@
       <header class="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 shrink-0">
         <h1 class="text-lg font-semibold text-white uppercase tracking-wider">Graph-Based Attack Visualizer</h1>
         <div class="flex items-center gap-4">
-          <button id="reloadBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Reload</button>
+          <button id="reloadBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Reload Graph</button>
           <span id="status" class="font-mono text-slate-500 uppercase"></span>
         </div>
       </header>
 
       <main class="flex-1 p-4 overflow-hidden">
         <div class="h-full flex gap-4">
+          
           <div class="flex-1 bg-slate-800 rounded-xl shadow-lg p-2 relative border border-slate-700/50 min-w-0 min-h-0 flex flex-col">
-            
             <div id="pathResult" class="hidden absolute top-4 left-4 z-[100] bg-slate-900/90 backdrop-blur border border-rose-500/50 px-4 py-2 rounded-lg shadow-2xl flex items-center gap-3 animate-in pulse-red">
-  <div class="flex flex-col">
-    <span class="text-[9px] text-slate-500 uppercase font-bold tracking-widest leading-none">Total Attack Cost</span>
-    <div class="flex items-baseline gap-1 mt-1">
-      <span id="totalCostValue" class="text-2xl font-mono font-black text-rose-500">0</span>
-      <span class="text-[10px] text-rose-500/60 font-bold uppercase">Difficulty</span>
-    </div>
-  </div>
-</div>
-
+              <div class="flex flex-col">
+                <span class="text-[9px] text-slate-500 uppercase font-bold tracking-widest leading-none">Total Attack Cost</span>
+                <div class="flex items-baseline gap-1 mt-1">
+                  <span id="totalCostValue" class="text-2xl font-mono font-black text-rose-500">0</span>
+                  <span class="text-[10px] text-rose-500/60 font-bold uppercase">Difficulty</span>
+                </div>
+              </div>
+            </div>
             <div id="cy" class="flex-1 w-full"></div>
           </div>
 
@@ -97,11 +98,14 @@
                 </svg>
               </button>
             </div>
+            
             <div id="cardContent" class="p-4 space-y-5 overflow-y-auto"></div>
+            
             <div class="p-2 bg-slate-900/20 border-t border-slate-700 mt-auto text-center">
               <p class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Security Engine</p>
             </div>
           </aside>
+
         </div>
       </main>
     </div>
