@@ -5,6 +5,7 @@ public class Node {
     
     private String id;                                      // unique identifier for the node
     private NodeType type;                                  // type of node (email, VPN, database, etc)
+    private String displayName;
 
     public Node(String id, NodeType type) {                 // constructor for creating a node with an id and type (both required)
         this.id = id;
@@ -17,5 +18,13 @@ public class Node {
 
     public NodeType getType() {                             // returns the type of the node
         return type;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 }

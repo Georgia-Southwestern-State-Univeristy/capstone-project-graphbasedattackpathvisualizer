@@ -32,3 +32,8 @@ Thumbs.db
 ################################
 .vscode/*
 !.vscode/settings.json
+
+
+# IDE
+.idea/
+.vscode/

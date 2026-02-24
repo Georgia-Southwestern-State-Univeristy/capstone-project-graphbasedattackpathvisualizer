@@ -7,13 +7,13 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.initializer.graph.Node;
 import com.initializer.services.GraphEdgeDTO;
 import com.initializer.services.GraphService;
 import com.initializer.services.ShortestPathService;
 import com.initializer.services.AttackPathResult;
-
 
 // REST controller for exposing attack graph structure.
 
@@ -27,6 +27,8 @@ public class VisualizerController {
     @Autowired
     private ShortestPathService shortestPathService;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     
     // Health check endpoint.
     
@@ -34,6 +36,11 @@ public class VisualizerController {
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Visualizer API is running");
     }
+    @GetMapping("/test-db")
+    public ResponseEntity<String> testDatabase() {
+        String result = jdbcTemplate.queryForObject("SELECT 1", String.class);
+        return ResponseEntity.ok("Database Connected: " + result);
+}
 
     
     // Returns the full attack graph structure (nodes + edges).
