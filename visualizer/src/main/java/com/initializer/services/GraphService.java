@@ -20,15 +20,12 @@ public class GraphService {
     private final NodeRepository nodeRepository;
     private final EdgeRepository edgeRepository;
 
-    private final DirectedWeightedMultigraph<Node, Edge> graph;
-
     public GraphService(NodeRepository nodeRepository,
                         EdgeRepository edgeRepository) {
 
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
 
-        this.graph = buildGraphFromDatabase();
     }
 
     private DirectedWeightedMultigraph<Node, Edge> buildGraphFromDatabase() {
@@ -47,8 +44,9 @@ public class GraphService {
             NodeType type = NodeType.valueOf(entity.getNodeType());
 
             Node node = new Node(
-                    entity.getNodeType(),
-                    type
+                entity.getNodeType(),
+                type,
+                entity.getDisplayName()
             );
 
             g.addVertex(node);
@@ -76,10 +74,13 @@ public class GraphService {
     }
 
     public List<Node> getNodes() {
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
         return new ArrayList<>(graph.vertexSet());
     }
 
     public List<GraphEdgeDTO> getEdges() {
+
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
         List<GraphEdgeDTO> edges = new ArrayList<>();
 
         for (Edge edge : graph.edgeSet()) {
@@ -99,6 +100,6 @@ public class GraphService {
     }
 
     public DirectedWeightedMultigraph<Node, Edge> getGraph() {
-        return graph;
-    }
+    return buildGraphFromDatabase();
+}
 }

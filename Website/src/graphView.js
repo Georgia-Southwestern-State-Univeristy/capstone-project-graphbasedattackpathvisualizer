@@ -82,25 +82,9 @@ const ATTACK_DETAILS = {
 
 // --- UTILITY FUNCTIONS ---
 
-function shortLabel(id) {
-  const map = {
-    ATTACKER: "Attacker",
-    WEB_APP: "Web App",
-    VPN: "VPN",
-    EMPLOYEE_EMAIL: "Employee Email",
-    EMPLOYEE_WORKSTATION: "Workstation",
-    IDENTITY_PROVIDER: "Identity Provider",
-    ADMIN_ACCOUNT: "Admin Account",
-    CUSTOMER_DB: "Customer Database",
-    FILE_SERVER: "File Server",
-    THIRD_PARTY_SAAS: "SaaS"
-  };
-  return map[id] || id;
-}
-
 function toCytoscapeElements(apiGraph) {
   const nodes = (apiGraph.nodes ?? []).map((n) => ({
-    data: { id: n.id, type: n.type ?? "", label: shortLabel(n.id) },
+    data: { id: n.id, type: n.type ?? "", label: n.displayName ?? n.id },
   }));
 
   const edges = (apiGraph.edges ?? []).map((e) => {
