@@ -340,16 +340,71 @@ export async function renderGraph() {
             "transition-duration": "0.2s"
           }
         },
-        { selector: 'node[id = "attacker"]', style: { "background-color": "#a51433" } },
-        { selector: 'node[id = "webApp"]', style: { "background-color": "#2563eb" } },
-        { selector: 'node[id = "vpn"]', style: { "background-color": "#7c3aed" } },
-        { selector: 'node[id = "employeeEmail"]', style: { "background-color": "#ea580c" } },
-        { selector: 'node[id = "employeeWorkstation"]', style: { "background-color": "#0891b2" } },
-        { selector: 'node[id = "identityProvider"]', style: { "background-color": "#ca8a04" } },
-        { selector: 'node[id = "adminAccount"]', style: { "background-color": "#b35d81" } },
-        { selector: 'node[id = "fileServer"]', style: { "background-color": "#0f766e" } },
-        { selector: 'node[id = "thirdPartySaas"]', style: { "background-color": "#4338ca" } },
-        { selector: 'node[id = "customerDb"]', style: { "background-color": "#16a34a" } },
+    {
+    selector: 'node[id = "attacker"]',
+    style: {
+      'background-color': '#9ca3af', // gray
+      'label': 'data(label)'
+    }
+  },
+
+  /* ================= COMPANY / USER ASSETS (GREEN) ================= */
+  {
+    selector: 'node[id = "webApp"]',
+    style: { 'background-color': '#86efac' } // light green
+  },
+  {
+    selector: 'node[id = "vpn"]',
+    style: { 'background-color': '#86efac' }
+  },
+  {
+    selector: 'node[id = "employeeEmail"]',
+    style: { 'background-color': '#86efac' }
+  },
+
+  /* ================= INTERNAL CORE SYSTEMS (ORANGE) ================= */
+  {
+    selector: 'node[id = "employeeWorkstation"]',
+    style: { 'background-color': '#fb923c' }
+  },
+  {
+    selector: 'node[id = "identityProvider"]',
+    style: { 'background-color': '#fb923c' }
+  },
+  {
+    selector: 'node[id = "adminAccount"]',
+    style: { 'background-color': '#fb923c' }
+  },
+  {
+    selector: 'node[id = "fileServer"]',
+    style: { 'background-color': '#fb923c' }
+  },
+
+  /* ================= TRUSTED THIRD PARTY (YELLOW) ================= */
+  {
+    selector: 'node[id = "thirdPartySaas"]',
+    style: { 'background-color': '#fde047' }
+  },
+
+  /* ================= HIGH VALUE TARGET (RED) ================= */
+  {
+    selector: 'node[id = "customerDb"]',
+    style: {
+      'background-color': '#ef4444',
+      'font-weight': 'bold'
+    }
+  },
+
+  /* ================= DEFAULT EDGE ================= */
+  {
+    selector: 'edge',
+    style: {
+      'width': 2,
+      'line-color': '#64748b',
+      'target-arrow-color': '#64748b',
+      'target-arrow-shape': 'triangle'
+    }
+  },
         {
           selector: "edge",
           style: {
