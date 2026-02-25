@@ -35,6 +35,7 @@
       <h2 class="text-lg font-semibold mb-6 text-white uppercase tracking-wider">Mitigations</h2>
       
       <div class="space-y-6 flex-1">
+         <!-- Email MFA -->
         <div>
           <label class="flex items-center justify-between cursor-pointer group">
             <span class="font-medium group-hover:text-white transition">Email MFA</span>
@@ -45,7 +46,7 @@
             </div>
           </label>
         </div>
-        
+                 <!-- Web App Hardening -->
         <div>
           <label class="flex items-center justify-between cursor-pointer group">
             <span class="font-medium group-hover:text-white transition">Web App Hardening</span>
@@ -53,6 +54,27 @@
               <input id="web-hardening" type="checkbox" class="sr-only peer">
               <div class="w-12 h-6 bg-slate-600 rounded-full peer-checked:bg-blue-500 transition-all"></div>
               <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>           
+            </div>
+          </label>
+        </div>
+         <!-- VPN / Remote Access MFA Enabled -->
+        <div>
+          <label class="flex items-center justify-between cursor-pointer group">
+            <span class="font-medium group-hover:text-white transition">
+             VPN / Remote Acess MFA Enabled
+            </span>
+
+            <div class="relative">
+              <input id="VPN" type="checkbox" class="sr-only peer">
+
+              <div class="w-12 h-6 bg-slate-600 rounded-full
+                         peer-checked:bg-blue-300
+                         transition-all duration-300
+                         shadow-inner"></div>
+
+              <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full
+                         shadow-md transition-all duration-300
+                         peer-checked:translate-x-6"></div>
             </div>
           </label>
         </div>
@@ -64,7 +86,7 @@
             </span>
 
             <div class="relative">
-              <input id="web-hardening" type="checkbox" class="sr-only peer">
+              <input id="Endpoint-Detection" type="checkbox" class="sr-only peer">
 
               <div class="w-12 h-6 bg-slate-600 rounded-full
                          peer-checked:bg-amber-500
@@ -192,11 +214,11 @@
         <div>
           <label class="flex items-center justify-between cursor-pointer group">
             <span class="font-medium group-hover:text-white transition">
-             Network Segregation
+             Network Segmentation
             </span>
 
             <div class="relative">
-              <input id="Network-Segregation" type="checkbox" class="sr-only peer">
+              <input id="Network-Segmentation" type="checkbox" class="sr-only peer">
 
               <div class="w-12 h-6 bg-slate-600 rounded-full
                          peer-checked:bg-red-500
@@ -254,6 +276,7 @@
           </label>
         </div>
       </div>
+      
       
       <div class="space-y-2 pt-4 border-t border-slate-700">
         <button id="computeBtn" class="w-full bg-blue-600 hover:bg-blue-700 transition py-2 rounded-lg font-bold uppercase tracking-tighter">Compute Path</button>
