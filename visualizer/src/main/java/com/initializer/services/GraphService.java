@@ -6,38 +6,85 @@ import java.util.List;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.springframework.stereotype.Service;
 
+import com.initializer.entity.NodeEntity;
+import com.initializer.entity.EdgeEntity;
 import com.initializer.graph.Edge;
 import com.initializer.graph.Node;
-import com.initializer.graph.SmallBusinessAttackGraph;
-
-
-// Service layer responsible for providing graph data
-// extracted from the predefined JGraphT attack graph
+import com.initializer.graph.NodeType;
+import com.initializer.repository.NodeRepository;
+import com.initializer.repository.EdgeRepository;
 
 @Service
 public class GraphService {
 
-    private final DirectedWeightedMultigraph<Node, Edge> graph;
+    private final NodeRepository nodeRepository;
+    private final EdgeRepository edgeRepository;
 
-    public GraphService() {
-        // Build the predefined small business attack graph
-        this.graph = SmallBusinessAttackGraph.buildGraph();
+    public GraphService(NodeRepository nodeRepository,
+                        EdgeRepository edgeRepository) {
+
+        this.nodeRepository = nodeRepository;
+        this.edgeRepository = edgeRepository;
+
     }
 
-    
-    // Returns all nodes in the attack graph
-    
+    private DirectedWeightedMultigraph<Node, Edge> buildGraphFromDatabase() {
+
+        DirectedWeightedMultigraph<Node, Edge> g =
+                new DirectedWeightedMultigraph<>(Edge.class);
+
+        List<NodeEntity> nodeEntities = nodeRepository.findAll();
+        List<EdgeEntity> edgeEntities = edgeRepository.findAll();
+
+        // Map database nodes -> graph nodes
+        java.util.Map<Integer, Node> nodeMap = new java.util.HashMap<>();
+
+        for (NodeEntity entity : nodeEntities) {
+
+            NodeType type = NodeType.valueOf(entity.getNodeType());
+
+            Node node = new Node(
+                entity.getNodeType(),
+                type,
+                entity.getDisplayName()
+            );
+
+            g.addVertex(node);
+            nodeMap.put(entity.getNodeID(), node);
+        }
+
+        // Add edges
+        for (EdgeEntity entity : edgeEntities) {
+
+            Node source = nodeMap.get(entity.getSourceNode().getNodeID());
+            Node target = nodeMap.get(entity.getTargetNode().getNodeID());
+
+            Edge edge = new Edge(
+                    entity.getAttackAction(),
+                    entity.getBaseWeight()
+            );
+
+            g.addEdge(source, target, edge);
+            g.setEdgeWeight(edge, entity.getBaseWeight());
+        }
+
+        System.out.println("Graph built dynamically from database.");
+
+        return g;
+    }
+
     public List<Node> getNodes() {
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
         return new ArrayList<>(graph.vertexSet());
     }
 
-    
-    // Returns all edges in the attack graph with source and target information
-    
     public List<GraphEdgeDTO> getEdges() {
+
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
         List<GraphEdgeDTO> edges = new ArrayList<>();
 
         for (Edge edge : graph.edgeSet()) {
+
             Node source = graph.getEdgeSource(edge);
             Node target = graph.getEdgeTarget(edge);
 
@@ -52,9 +99,7 @@ public class GraphService {
         return edges;
     }
 
-    // Returns the entire graph structure
     public DirectedWeightedMultigraph<Node, Edge> getGraph() {
-        return graph;
-
-    }
+    return buildGraphFromDatabase();
+}
 }

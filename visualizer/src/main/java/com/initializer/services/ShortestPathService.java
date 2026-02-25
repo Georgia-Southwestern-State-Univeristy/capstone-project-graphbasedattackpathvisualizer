@@ -7,34 +7,35 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.springframework.stereotype.Service;
+
 import com.initializer.exception.InvalidNodeException;
-
-
 import com.initializer.graph.Edge;
 import com.initializer.graph.Node;
+import com.initializer.graph.NodeType;
 
 @Service
 public class ShortestPathService {
 
-    private final DirectedWeightedMultigraph<Node, Edge> graph;
+    private final GraphService graphService;
 
-    // Inject GraphService to obtain the existing graph instance
-    // from GraphService and make sure a single shared graph is used
+    // Inject GraphService (do NOT store the graph itself)
     public ShortestPathService(GraphService graphService) {
-        this.graph = graphService.getGraph();
+        this.graphService = graphService;
     }
 
     // Computes the shortest attack path and returns ordered nodes, edges, and total path cost
     public AttackPathResult computeAttackPath(String sourceId, String targetId) {
 
-        Node source = findNodeById(sourceId)
+        // Always get a fresh graph
+        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+
+        Node source = findNodeById(graph, sourceId)
             .orElseThrow(() ->
                     new InvalidNodeException("Invalid source node ID: " + sourceId));
 
-        Node target = findNodeById(targetId)
+        Node target = findNodeById(graph, targetId)
             .orElseThrow(() ->
                     new InvalidNodeException("Invalid target node ID: " + targetId));
-
 
         DijkstraShortestPath<Node, Edge> dijkstra =
                 new DijkstraShortestPath<>(graph);
@@ -44,7 +45,6 @@ public class ShortestPathService {
         if (path == null) {
             throw new InvalidNodeException(
                     "No attack path exists between " + sourceId + " and " + targetId);
-
         }
 
         return new AttackPathResult(
@@ -54,27 +54,33 @@ public class ShortestPathService {
         );
     }
 
-    // Returns all nodes that are classified as attacker entry points
-    // This allows for possible future expansion to multiple attacker nodes without
-    // hardcoding specific node IDs.
+    // Returns attacker entry nodes from a fresh graph
     public List<Node> getAttackerEntryNodes() {
+
+        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+
         return graph.vertexSet()
             .stream()
-            .filter(node -> node.getType() == com.initializer.graph.NodeType.ATTACKER)
-            .collect(java.util.stream.Collectors.toList());
+            .filter(node -> node.getType() == NodeType.ATTACKER)
+            .toList();
     }
 
-    // Returns all nodes classified as high-value targets
-    // For MVP, this includes only CUSTOMER_DB nodes
+    // Returns high-value target nodes from a fresh graph
     public List<Node> getHighValueTargetNodes() {
+
+        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+
         return graph.vertexSet()
             .stream()
-            .filter(node -> node.getType() == com.initializer.graph.NodeType.CUSTOMER_DB)
-            .collect(java.util.stream.Collectors.toList());
+            .filter(node -> node.getType() == NodeType.CUSTOMER_DB)
+            .toList();
     }
 
-    // Helper method to locate a node by ID inside the existing graph
-    private Optional<Node> findNodeById(String id) {
+    // Helper method to locate node by ID inside a provided graph
+    private Optional<Node> findNodeById(
+            DirectedWeightedMultigraph<Node, Edge> graph,
+            String id) {
+
         return graph.vertexSet()
                 .stream()
                 .filter(node -> node.getId().equalsIgnoreCase(id))

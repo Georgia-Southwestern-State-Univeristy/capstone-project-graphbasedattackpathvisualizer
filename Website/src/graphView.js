@@ -5,16 +5,16 @@ let cy = null;
 // --- CONFIGURATION & DATA MAPS ---
 
 const NODE_DESCRIPTIONS = {
-  attacker: "The starting point of the simulation representing an external threat actor.",
-  webApp: "Public-facing company web application; a common entry point for exploits.",
-  vpn: "Remote access gateway providing entry into the internal corporate network.",
-  employeeEmail: "Corporate email accounts; primary targets for phishing and credential theft.",
-  employeeWorkstation: "Standard user endpoint used for internal lateral movement.",
-  identityProvider: "The IdP (like Okta or Azure AD) managing authentication and SSO.",
-  adminAccount: "High-privilege credentials capable of managing databases and servers.",
-  customerDb: "The ultimate target; contains sensitive customer PII and records.",
-  fileServer: "Internal storage containing shared documents and configuration files.",
-  thirdPartySaas: "External cloud services (SaaS) integrated with corporate identity."
+  ATTACKER: "The starting point of the simulation representing an external threat actor.",
+  WEB_APP: "Public-facing company web application; a common entry point for exploits.",
+  VPN: "Remote access gateway providing entry into the internal corporate network.",
+  EMPLOYEE_EMAIL: "Corporate email accounts; primary targets for phishing and credential theft.",
+  EMPLOYEE_WORKSTATION: "Standard user endpoint used for internal lateral movement.",
+  IDENTITY_PROVIDER: "The IdP (like Okta or Azure AD) managing authentication and SSO.",
+  ADMIN_ACCOUNT: "High-privilege credentials capable of managing databases and servers.",
+  CUSTOMER_DB: "The ultimate target; contains sensitive customer PII and records.",
+  FILE_SERVER: "Internal storage containing shared documents and configuration files.",
+  THIRD_PARTY_SAAS: "External cloud services (SaaS) integrated with corporate identity."
 };
 
 const ATTACK_DETAILS = {
@@ -80,40 +80,11 @@ const ATTACK_DETAILS = {
   }
 };
 
-const FIXED_POSITIONS = {
-  attacker: { x: 70, y: 301 },
-  webApp: { x: 350, y: 120 },
-  fileServer: { x: 975, y: 120 },
-  customerDb: { x: 1350, y: 300 },
-  vpn: { x: 350, y: 300 },
-  employeeWorkstation: { x: 650, y: 301 },
-  adminAccount: { x: 975, y: 400 },
-  employeeEmail: { x: 350, y: 480 },
-  identityProvider: { x: 650, y: 481 },
-  thirdPartySaas: { x: 820, y: 620 }
-};
-
 // --- UTILITY FUNCTIONS ---
-
-function shortLabel(id) {
-  const map = {
-    attacker: "Attacker",
-    webApp: "Web App",
-    vpn: "VPN",
-    employeeEmail: "Employee Email",
-    employeeWorkstation: "Workstation",
-    identityProvider: "Identity Provider",
-    adminAccount: "Admin Account",
-    customerDb: "Customer Database",
-    fileServer: "File Server",
-    thirdPartySaas: "SaaS"
-  };
-  return map[id] || id;
-}
 
 function toCytoscapeElements(apiGraph) {
   const nodes = (apiGraph.nodes ?? []).map((n) => ({
-    data: { id: n.id, type: n.type ?? "", label: shortLabel(n.id) },
+    data: { id: n.id, type: n.type ?? "", label: n.displayName ?? n.id },
   }));
 
   const edges = (apiGraph.edges ?? []).map((e) => {
@@ -202,7 +173,7 @@ export function showDetailCard(data, type) {
   if (!card) return;
 
   card.classList.remove("hidden");
-  if (cy) { cy.resize(); cy.fit(undefined, 30); }
+  if (cy) { cy.resize(); cy.fit(undefined, 60); }
 
   title.className = "text-sm font-bold text-slate-400 uppercase tracking-widest";
 
@@ -255,17 +226,10 @@ export function showDetailCard(data, type) {
 export function hideDetailCard() {
   const card = document.getElementById("detailCard");
   if (card) card.classList.add("hidden");
-  if (cy) { cy.resize(); cy.fit(undefined, 30); }
+  if (cy) { cy.resize(); cy.fit(undefined, 60); }
 }
 
 // --- LOGIC EXPORTS ---
-
-function applyFixedPositions() {
-  Object.entries(FIXED_POSITIONS).forEach(([id, pos]) => {
-    const node = cy.getElementById(id);
-    if (!node.empty()) { node.position(pos); node.unlock(); }
-  });
-}
 
 export async function computeAndShowPath() {
   const status = document.getElementById("status");
@@ -273,7 +237,7 @@ export async function computeAndShowPath() {
   const costValue = document.getElementById("totalCostValue");
   try {
     status.textContent = "Computing...";
-    const pathResp = await fetchAttackPath("attacker", "customerDb");
+    const pathResp = await fetchAttackPath("ATTACKER", "CUSTOMER_DB");
     applyPathHighlight(pathResp);
     status.textContent = "Path Found";
     status.className = "font-mono text-rose-500 uppercase tracking-widest animate-pulse font-bold drop-shadow-[0_0_10px_rgba(244,63,94,0.7)]";
@@ -317,7 +281,12 @@ export async function renderGraph() {
       container: document.getElementById("cy"),
       elements,
       wheelSensitivity: 0.3,
-      layout: { name: "preset" },
+      layout: {
+        name: "breadthfirst",
+        directed: true,
+        padding: 40,
+        spacingFactor: 1.2
+      },
       style: [
         {
           selector: "node",
@@ -340,71 +309,16 @@ export async function renderGraph() {
             "transition-duration": "0.2s"
           }
         },
-    {
-    selector: 'node[id = "attacker"]',
-    style: {
-      'background-color': '#9ca3af', // gray
-      'label': 'data(label)'
-    }
-  },
-
-  /* ================= COMPANY / USER ASSETS (GREEN) ================= */
-  {
-    selector: 'node[id = "webApp"]',
-    style: { 'background-color': '#86efac' } // light green
-  },
-  {
-    selector: 'node[id = "vpn"]',
-    style: { 'background-color': '#86efac' }
-  },
-  {
-    selector: 'node[id = "employeeEmail"]',
-    style: { 'background-color': '#86efac' }
-  },
-
-  /* ================= INTERNAL CORE SYSTEMS (ORANGE) ================= */
-  {
-    selector: 'node[id = "employeeWorkstation"]',
-    style: { 'background-color': '#fb923c' }
-  },
-  {
-    selector: 'node[id = "identityProvider"]',
-    style: { 'background-color': '#fb923c' }
-  },
-  {
-    selector: 'node[id = "adminAccount"]',
-    style: { 'background-color': '#fb923c' }
-  },
-  {
-    selector: 'node[id = "fileServer"]',
-    style: { 'background-color': '#fb923c' }
-  },
-
-  /* ================= TRUSTED THIRD PARTY (YELLOW) ================= */
-  {
-    selector: 'node[id = "thirdPartySaas"]',
-    style: { 'background-color': '#fde047' }
-  },
-
-  /* ================= HIGH VALUE TARGET (RED) ================= */
-  {
-    selector: 'node[id = "customerDb"]',
-    style: {
-      'background-color': '#ef4444',
-      'font-weight': 'bold'
-    }
-  },
-
-  /* ================= DEFAULT EDGE ================= */
-  {
-    selector: 'edge',
-    style: {
-      'width': 2,
-      'line-color': '#64748b',
-      'target-arrow-color': '#64748b',
-      'target-arrow-shape': 'triangle'
-    }
-  },
+        { selector: 'node[id = "ATTACKER"]', style: { "background-color": "#a51433" } },
+        { selector: 'node[id = "WEB_APP"]', style: { "background-color": "#2563eb" } },
+        { selector: 'node[id = "VPN"]', style: { "background-color": "#7c3aed" } },
+        { selector: 'node[id = "EMPLOYEE_EMAIL"]', style: { "background-color": "#ea580c" } },
+        { selector: 'node[id = "EMPLOYEE_WORKSTATION"]', style: { "background-color": "#0891b2" } },
+        { selector: 'node[id = "IDENTITY_PROVIDER"]', style: { "background-color": "#ca8a04" } },
+        { selector: 'node[id = "ADMIN_ACCOUNT"]', style: { "background-color": "#b35d81" } },
+        { selector: 'node[id = "FILE_SERVER"]', style: { "background-color": "#0f766e" } },
+        { selector: 'node[id = "THIRD_PARTY_SAAS"]', style: { "background-color": "#4338ca" } },
+        { selector: 'node[id = "CUSTOMER_DB"]', style: { "background-color": "#16a34a" } },
         {
           selector: "edge",
           style: {
@@ -475,12 +389,17 @@ export async function renderGraph() {
     cy.add(elements);
   }
 
-  applyFixedPositions();
+  cy.layout({
+    name: "breadthfirst",
+    directed: true,
+    padding: 40,
+    spacingFactor: 1.2
+  }).run();
 
   setTimeout(() => {
     if (cy) {
       cy.resize();
-      cy.fit(undefined, 30);
+      cy.fit(undefined, 60);
       if (status) {
         status.textContent = "System Ready";
         status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-500";
@@ -494,6 +413,6 @@ export async function renderGraph() {
 const container = document.getElementById('cy');
 if (container) {
   new ResizeObserver(() => {
-    if (cy) { cy.resize(); cy.fit(undefined, 30); }
+    if (cy) { cy.resize(); cy.fit(undefined, 60); }
   }).observe(container);
 }
