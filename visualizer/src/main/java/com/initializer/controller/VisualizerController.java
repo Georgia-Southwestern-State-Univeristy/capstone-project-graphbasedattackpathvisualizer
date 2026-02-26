@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.initializer.graph.Node;
 import com.initializer.services.GraphEdgeDTO;
 import com.initializer.services.GraphService;
+import com.initializer.services.MitigationDTO;
 import com.initializer.services.ShortestPathService;
 import com.initializer.services.AttackPathResult;
 
@@ -65,10 +66,17 @@ public class VisualizerController {
     @GetMapping("/path")
     public ResponseEntity<AttackPathResult> getAttackPath(
             @RequestParam String source,
-            @RequestParam String target) {
+            @RequestParam String target,
+            @RequestParam(required = false) List<Integer> mitigations) {
 
-        AttackPathResult result = shortestPathService.computeAttackPath(source, target);
+        AttackPathResult result = shortestPathService.computeAttackPath(source, target, mitigations);
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/mitigations")
+    public ResponseEntity<List<MitigationDTO>> getMitigations() {
+
+        return ResponseEntity.ok(graphService.getMitigations());
     }
 }

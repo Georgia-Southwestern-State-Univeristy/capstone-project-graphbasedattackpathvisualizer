@@ -41,4 +41,8 @@ public class EdgeEntity {
     public NodeEntity getTargetNode() { return targetNode; }
     public String getAttackAction() { return attackAction; }
     public Integer getBaseWeight() { return baseWeight; }
+
+    public List<MitigationEffectEntity> getMitigationEffects() {
+    return mitigationEffects;
+}
 }
