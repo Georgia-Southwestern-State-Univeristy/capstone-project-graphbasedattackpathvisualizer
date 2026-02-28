@@ -31,5 +31,6 @@ public class MitigationEffectEntity {
     }
 
     public Integer getEffectID() { return effectID; }
+    public MitigationEntity getMitigation() { return mitigation; }
     public Integer getWeightModifier() { return weightModifier; }
 }

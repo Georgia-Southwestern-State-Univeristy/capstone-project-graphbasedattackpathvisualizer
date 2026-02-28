@@ -80,6 +80,21 @@ const ATTACK_DETAILS = {
   }
 };
 
+const MITIGATION_COLORS = {
+  "Email MFA": "peer-checked:bg-emerald-500",
+  "Web App Hardening": "peer-checked:bg-blue-500",
+  "VPN / Remote Access MFA": "peer-checked:bg-blue-300",
+  "Endpoint Detection & Response": "peer-checked:bg-amber-500",
+  "Remote Access Hardening": "peer-checked:bg-pink-300",
+  "Conditional Access": "peer-checked:bg-cyan-500",
+  "Identity Provider Hardening": "peer-checked:bg-green-700",
+  "SaaS Application Security Controls": "peer-checked:bg-orange-500",
+  "Role-Based Access Control (RBAC) Enforcement": "peer-checked:bg-orange-800",
+  "File Server Access Controls": "peer-checked:bg-purple-500",
+  "Privileged Account Hardening": "peer-checked:bg-yellow-500",
+  "Network Segmentation": "peer-checked:bg-red-500"
+};
+
 // --- UTILITY FUNCTIONS ---
 
 function toCytoscapeElements(apiGraph) {
@@ -129,10 +144,62 @@ async function fetchGraph() {
 }
 
 async function fetchAttackPath(source, target) {
-  const res = await fetch(`/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+
+  const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
+  const ids = Array.from(checkedBoxes).map(cb => cb.dataset.id);
+
+  let url = `/api/path?source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`;
+
+  if (ids.length > 0) {
+    url += `&mitigations=${ids.join(",")}`;
+  }
+
+  const res = await fetch(url);
   const data = await res.json();
+
   if (!res.ok) throw new Error(data.message || `Request failed`);
+
   return data;
+}
+
+async function fetchMitigations() {
+  const res = await fetch("/api/mitigations");
+  if (!res.ok) throw new Error("Failed to load mitigations");
+  return res.json();
+}
+
+async function renderMitigations() {
+  const container = document.getElementById("mitigationContainer");
+  if (!container) return;
+
+  const mitigations = await fetchMitigations();
+
+  container.innerHTML = "";
+
+  mitigations.forEach(mit => {
+
+    const colorClass =
+      MITIGATION_COLORS[mit.name] || "peer-checked:bg-emerald-500";
+
+    const wrapper = document.createElement("div");
+
+    wrapper.innerHTML = `
+      <label class="flex items-center justify-between cursor-pointer group">
+        <span class="font-medium group-hover:text-white transition">
+          ${mit.name}
+        </span>
+        <div class="relative">
+          <input type="checkbox"
+                 class="sr-only peer mitigation-checkbox"
+                 data-id="${mit.id}">
+          <div class="w-12 h-6 bg-slate-600 rounded-full ${colorClass} transition-all duration-300 shadow-inner"></div>
+          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>
+        </div>
+      </label>
+    `;
+
+    container.appendChild(wrapper);
+  });
 }
 
 // --- PATH HIGHLIGHTING ---
@@ -395,6 +462,8 @@ export async function renderGraph() {
     padding: 40,
     spacingFactor: 1.2
   }).run();
+
+  await renderMitigations();
 
   setTimeout(() => {
     if (cy) {

@@ -24,10 +24,14 @@ public class ShortestPathService {
     }
 
     // Computes the shortest attack path and returns ordered nodes, edges, and total path cost
-    public AttackPathResult computeAttackPath(String sourceId, String targetId) {
+    public AttackPathResult computeAttackPath(
+        String sourceId,
+        String targetId,
+        List<Integer> enabledMitigationIds) {
 
         // Always get a fresh graph
-        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+        DirectedWeightedMultigraph<Node, Edge> graph =
+        graphService.getGraph(enabledMitigationIds);
 
         Node source = findNodeById(graph, sourceId)
             .orElseThrow(() ->
@@ -57,7 +61,7 @@ public class ShortestPathService {
     // Returns attacker entry nodes from a fresh graph
     public List<Node> getAttackerEntryNodes() {
 
-        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph(null);
 
         return graph.vertexSet()
             .stream()
@@ -68,7 +72,7 @@ public class ShortestPathService {
     // Returns high-value target nodes from a fresh graph
     public List<Node> getHighValueTargetNodes() {
 
-        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph();
+        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph(null);
 
         return graph.vertexSet()
             .stream()

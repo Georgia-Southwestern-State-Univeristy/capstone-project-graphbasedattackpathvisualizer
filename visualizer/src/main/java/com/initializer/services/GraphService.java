@@ -13,22 +13,25 @@ import com.initializer.graph.Node;
 import com.initializer.graph.NodeType;
 import com.initializer.repository.NodeRepository;
 import com.initializer.repository.EdgeRepository;
+import com.initializer.repository.MitigationRepository;
 
 @Service
 public class GraphService {
 
     private final NodeRepository nodeRepository;
     private final EdgeRepository edgeRepository;
+    private final MitigationRepository mitigationRepository;
 
     public GraphService(NodeRepository nodeRepository,
-                        EdgeRepository edgeRepository) {
-
+                        EdgeRepository edgeRepository,
+                        MitigationRepository mitigationRepository) {
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
+        this.mitigationRepository = mitigationRepository;
+}
 
-    }
-
-    private DirectedWeightedMultigraph<Node, Edge> buildGraphFromDatabase() {
+    private DirectedWeightedMultigraph<Node, Edge> buildGraphFromDatabase(
+        List<Integer> enabledMitigationIds) {
 
         DirectedWeightedMultigraph<Node, Edge> g =
                 new DirectedWeightedMultigraph<>(Edge.class);
@@ -59,13 +62,27 @@ public class GraphService {
             Node source = nodeMap.get(entity.getSourceNode().getNodeID());
             Node target = nodeMap.get(entity.getTargetNode().getNodeID());
 
-            Edge edge = new Edge(
-                    entity.getAttackAction(),
-                    entity.getBaseWeight()
-            );
+            int finalWeight = entity.getBaseWeight();
 
-            g.addEdge(source, target, edge);
-            g.setEdgeWeight(edge, entity.getBaseWeight());
+            if (enabledMitigationIds != null && !enabledMitigationIds.isEmpty()) {
+
+                for (var effect : entity.getMitigationEffects()) {
+
+                    if (enabledMitigationIds.contains(
+                        effect.getMitigation().getMitID())) {
+
+                    finalWeight += effect.getWeightModifier();
+                }
+            }
+        }
+
+        Edge edge = new Edge(
+            entity.getAttackAction(),
+            finalWeight
+        );
+
+        g.addEdge(source, target, edge);
+        g.setEdgeWeight(edge, finalWeight);
         }
 
         System.out.println("Graph built dynamically from database.");
@@ -74,13 +91,13 @@ public class GraphService {
     }
 
     public List<Node> getNodes() {
-        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase(null);
         return new ArrayList<>(graph.vertexSet());
     }
 
     public List<GraphEdgeDTO> getEdges() {
 
-        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase();
+        DirectedWeightedMultigraph<Node, Edge> graph = buildGraphFromDatabase(null);
         List<GraphEdgeDTO> edges = new ArrayList<>();
 
         for (Edge edge : graph.edgeSet()) {
@@ -99,7 +116,21 @@ public class GraphService {
         return edges;
     }
 
-    public DirectedWeightedMultigraph<Node, Edge> getGraph() {
-    return buildGraphFromDatabase();
+    public DirectedWeightedMultigraph<Node, Edge> getGraph(
+        List<Integer> enabledMitigationIds) {
+
+    return buildGraphFromDatabase(enabledMitigationIds);
+}
+
+public List<MitigationDTO> getMitigations() {
+
+    return mitigationRepository.findAll()
+            .stream()
+            .map(m -> new MitigationDTO(
+                    m.getMitID(),
+                    m.getMitName(),
+                    m.getMitDesc()
+            ))
+            .toList();
 }
 }
