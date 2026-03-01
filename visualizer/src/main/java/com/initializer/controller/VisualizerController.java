@@ -1,5 +1,6 @@
 package com.initializer.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,16 +48,38 @@ public class VisualizerController {
     public ResponseEntity<String> testDatabase() {
         String result = jdbcTemplate.queryForObject("SELECT 1", String.class);
         return ResponseEntity.ok("Database Connected: " + result);
-}
+    }
 
     
-    // Returns the full attack graph structure (nodes + edges).
-    
+    // Returns the attack graph structure filtered by the active BusinessProfile.
+    // If no BusinessProfile exists, returns 404 to force questionnaire completion.
     @GetMapping("/graph")
     public ResponseEntity<Map<String, Object>> getGraph() {
 
-        List<Node> nodes = graphService.getNodes();
-        List<GraphEdgeDTO> edges = graphService.getEdges();
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var graph = graphService.getFilteredGraph(profile, null);
+
+        List<Node> nodes = new ArrayList<>(graph.vertexSet());
+        List<GraphEdgeDTO> edges = new ArrayList<>();
+
+        for (var edge : graph.edgeSet()) {
+
+            Node source = graph.getEdgeSource(edge);
+            Node target = graph.getEdgeTarget(edge);
+
+            edges.add(new GraphEdgeDTO(
+                    source.getId(),
+                    target.getId(),
+                    edge.getAttackAction(),
+                    edge.getWeight()
+            ));
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("nodes", nodes);

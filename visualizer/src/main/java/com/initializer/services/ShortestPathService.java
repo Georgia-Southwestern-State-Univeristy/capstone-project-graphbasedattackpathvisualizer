@@ -12,15 +12,19 @@ import com.initializer.exception.InvalidNodeException;
 import com.initializer.graph.Edge;
 import com.initializer.graph.Node;
 import com.initializer.graph.NodeType;
+import com.initializer.entity.BusinessProfileEntity;
 
 @Service
 public class ShortestPathService {
 
     private final GraphService graphService;
+    private final BusinessProfileService businessProfileService;
 
     // Inject GraphService (do NOT store the graph itself)
-    public ShortestPathService(GraphService graphService) {
+    public ShortestPathService(GraphService graphService,
+                               BusinessProfileService businessProfileService) {
         this.graphService = graphService;
+        this.businessProfileService = businessProfileService;
     }
 
     // Computes the shortest attack path and returns ordered nodes, edges, and total path cost
@@ -30,8 +34,15 @@ public class ShortestPathService {
         List<Integer> enabledMitigationIds) {
 
         // Always get a fresh graph
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            throw new InvalidNodeException("Business profile not configured.");
+        }
+
         DirectedWeightedMultigraph<Node, Edge> graph =
-        graphService.getGraph(enabledMitigationIds);
+                graphService.getFilteredGraph(profile, enabledMitigationIds);
 
         Node source = findNodeById(graph, sourceId)
             .orElseThrow(() ->
@@ -61,7 +72,15 @@ public class ShortestPathService {
     // Returns attacker entry nodes from a fresh graph
     public List<Node> getAttackerEntryNodes() {
 
-        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph(null);
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            throw new InvalidNodeException("Business profile not configured.");
+        }
+
+        DirectedWeightedMultigraph<Node, Edge> graph =
+                graphService.getFilteredGraph(profile, null);
 
         return graph.vertexSet()
             .stream()
@@ -72,7 +91,15 @@ public class ShortestPathService {
     // Returns high-value target nodes from a fresh graph
     public List<Node> getHighValueTargetNodes() {
 
-        DirectedWeightedMultigraph<Node, Edge> graph = graphService.getGraph(null);
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            throw new InvalidNodeException("Business profile not configured.");
+        }
+
+        DirectedWeightedMultigraph<Node, Edge> graph =
+                graphService.getFilteredGraph(profile, null);
 
         return graph.vertexSet()
             .stream()
