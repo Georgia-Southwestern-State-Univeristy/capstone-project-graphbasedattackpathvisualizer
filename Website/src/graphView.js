@@ -331,6 +331,20 @@ export function clearPath() {
   }
 }
 
+export async function initializeApp() {
+  try {
+    const res = await fetch("/api/profile");
+
+    if (!res.ok) throw new Error("No profile");
+
+    await renderGraph();
+
+  } catch {
+    const modal = document.getElementById("profileModal");
+    if (modal) modal.classList.remove("hidden");
+  }
+}
+
 export async function renderGraph() {
   const status = document.getElementById("status");
   const pathResult = document.getElementById("pathResult");
@@ -485,3 +499,32 @@ if (container) {
     if (cy) { cy.resize(); cy.fit(undefined, 60); }
   }).observe(container);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const saveBtn = document.getElementById("saveProfileBtn");
+  if (!saveBtn) return;
+
+  saveBtn.addEventListener("click", async () => {
+
+    const profile = {
+      usesVPN: document.getElementById("usesVPN").checked,
+      hasFileServer: document.getElementById("hasFileServer").checked,
+      usesSaaS: document.getElementById("usesSaaS").checked,
+      hasPublicWebApp: document.getElementById("hasPublicWebApp").checked,
+      usesIdentityProvider: document.getElementById("usesIdentityProvider").checked
+    };
+
+    await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profile)
+    });
+
+    document.getElementById("profileModal")
+      ?.classList.add("hidden");
+
+    await renderGraph();
+  });
+});
+
