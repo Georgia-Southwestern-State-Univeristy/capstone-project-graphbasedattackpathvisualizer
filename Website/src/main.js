@@ -1,5 +1,7 @@
 import "./style.css";
-import { renderGraph, computeAndShowPath, clearPath } from "./graphView.js";
+import { renderGraph, computeAndShowPath, clearPath, initializeApp } from "./graphView.js";
+
+/*
 function setupHowToModal() {
   const modal = document.getElementById("howToModal");
   const closeBtn = document.getElementById("closeHowTo");
@@ -31,9 +33,12 @@ function setupHowToModal() {
   const hide = localStorage.getItem(STORAGE_KEY) === "1";
   if (!hide) open();
 }
+*/
+//document.addEventListener("DOMContentLoaded", setupHowToModal);
 
-document.addEventListener("DOMContentLoaded", setupHowToModal);
+
 document.addEventListener("DOMContentLoaded", async () => {
+
   document.getElementById("reloadBtn")
     ?.addEventListener("click", () => renderGraph());
 
@@ -43,6 +48,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("clearPathBtn")
     ?.addEventListener("click", () => clearPath());
 
-  await renderGraph();
+  await initializeApp();
 });
 

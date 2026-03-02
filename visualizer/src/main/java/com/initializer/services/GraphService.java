@@ -14,6 +14,7 @@ import com.initializer.graph.NodeType;
 import com.initializer.repository.NodeRepository;
 import com.initializer.repository.EdgeRepository;
 import com.initializer.repository.MitigationRepository;
+import com.initializer.entity.BusinessProfileEntity;
 
 @Service
 public class GraphService {
@@ -120,6 +121,58 @@ public class GraphService {
         List<Integer> enabledMitigationIds) {
 
     return buildGraphFromDatabase(enabledMitigationIds);
+}
+
+public DirectedWeightedMultigraph<Node, Edge> getFilteredGraph(
+        BusinessProfileEntity profile,
+        List<Integer> enabledMitigationIds) {
+
+    // Build full master graph first
+    DirectedWeightedMultigraph<Node, Edge> graph =
+            buildGraphFromDatabase(enabledMitigationIds);
+
+    if (profile == null) {
+        return graph; // no filtering if profile not provided
+    }
+
+    // Apply structural filtering based on profile toggles
+
+    if (!profile.isUsesVPN()) {
+        removeNodeById(graph, "VPN");
+    }
+
+    if (!profile.isHasFileServer()) {
+        removeNodeById(graph, "FILE_SERVER");
+    }
+
+    if (!profile.isUsesSaaS()) {
+        removeNodeById(graph, "THIRD_PARTY_SAAS");
+    }
+
+    if (!profile.isHasPublicWebApp()) {
+        removeNodeById(graph, "WEB_APP");
+    }
+
+    if (!profile.isUsesIdentityProvider()) {
+        removeNodeById(graph, "IDENTITY_PROVIDER");
+    }
+
+    return graph;
+}
+
+private void removeNodeById(
+        DirectedWeightedMultigraph<Node, Edge> graph,
+        String nodeId) {
+
+    Node nodeToRemove = graph.vertexSet()
+            .stream()
+            .filter(n -> n.getId().equals(nodeId))
+            .findFirst()
+            .orElse(null);
+
+    if (nodeToRemove != null) {
+        graph.removeVertex(nodeToRemove);
+    }
 }
 
 public List<MitigationDTO> getMitigations() {

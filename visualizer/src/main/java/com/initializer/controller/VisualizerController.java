@@ -1,5 +1,6 @@
 package com.initializer.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.HttpStatus;
 
 import com.initializer.graph.Node;
 import com.initializer.services.GraphEdgeDTO;
@@ -15,6 +17,8 @@ import com.initializer.services.GraphService;
 import com.initializer.services.MitigationDTO;
 import com.initializer.services.ShortestPathService;
 import com.initializer.services.AttackPathResult;
+import com.initializer.entity.BusinessProfileEntity;
+import com.initializer.services.BusinessProfileService;
 
 // REST controller for exposing attack graph structure.
 
@@ -30,6 +34,9 @@ public class VisualizerController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private BusinessProfileService businessProfileService;
     
     // Health check endpoint.
     
@@ -41,16 +48,38 @@ public class VisualizerController {
     public ResponseEntity<String> testDatabase() {
         String result = jdbcTemplate.queryForObject("SELECT 1", String.class);
         return ResponseEntity.ok("Database Connected: " + result);
-}
+    }
 
     
-    // Returns the full attack graph structure (nodes + edges).
-    
+    // Returns the attack graph structure filtered by the active BusinessProfile.
+    // If no BusinessProfile exists, returns 404 to force questionnaire completion.
     @GetMapping("/graph")
     public ResponseEntity<Map<String, Object>> getGraph() {
 
-        List<Node> nodes = graphService.getNodes();
-        List<GraphEdgeDTO> edges = graphService.getEdges();
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var graph = graphService.getFilteredGraph(profile, null);
+
+        List<Node> nodes = new ArrayList<>(graph.vertexSet());
+        List<GraphEdgeDTO> edges = new ArrayList<>();
+
+        for (var edge : graph.edgeSet()) {
+
+            Node source = graph.getEdgeSource(edge);
+            Node target = graph.getEdgeTarget(edge);
+
+            edges.add(new GraphEdgeDTO(
+                    source.getId(),
+                    target.getId(),
+                    edge.getAttackAction(),
+                    edge.getWeight()
+            ));
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("nodes", nodes);
@@ -79,4 +108,36 @@ public class VisualizerController {
 
         return ResponseEntity.ok(graphService.getMitigations());
     }
+
+
+    // REST endpoint to create and persist a new BusinessProfile configuration.
+    // Expects JSON body containing infrastructure toggles.
+    // Returns 201 Created with the saved profile.
+    @PostMapping("/profile")
+    public ResponseEntity<BusinessProfileEntity> saveProfile(
+            @RequestBody BusinessProfileEntity profile) {
+
+        BusinessProfileEntity savedProfile =
+                businessProfileService.saveProfile(profile);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(savedProfile);
+    }
+
+
+    // REST endpoint to retrieve the most recently created BusinessProfile.
+    // Returns 200 with profile if found, or 404 if no profile exists.
+    @GetMapping("/profile")
+    public ResponseEntity<BusinessProfileEntity> getLatestProfile() {
+
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(profile);
+    }
+
 }
