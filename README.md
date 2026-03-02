@@ -8,6 +8,12 @@ The system computes the shortest attack path to high-value assets using Dijkstra
 
 This tool is designed to be an educational cybersecurity visualization platform.
 
+### BusinessProfile-Based Dynamic Topology
+
+Before the graph is rendered, the system requires a BusinessProfile configuration. On first load, users must complete a questionnaire that defines optional infrastructure components such as VPN access, File Server usage, SaaS integrations, Public Web App exposure, and Identity Provider usage.
+
+This configuration is persisted in the database and used to dynamically filter the graph structure. Nodes and edges are conditionally removed based on the saved BusinessProfile, and Dijkstra’s algorithm executes on the filtered graph instance. As a result, business structure directly influences the computed attack path.
+
 ## Tech Stack
 
 - **Backend Framework:** Spring Boot
@@ -120,6 +126,10 @@ After successful startup, change it back to:
     including ordered nodes, ordered edges, and total path cost
 - `GET /api/mitigations`
     Returns all available mitigation controls and their IDs
+- `GET /api/profile`
+    Returns the most recently saved BusinessProfile configuration. If no profile exists, the frontend will display the BusinessProfile questionnaire before rendering the graph.
+- `POST /api/profile`
+    Saves a new BusinessProfile configuration. This configuration is used to dynamically filter the graph structure before path computation.
 
 ---
 
