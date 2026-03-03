@@ -106,7 +106,16 @@ public class VisualizerController {
     @GetMapping("/mitigations")
     public ResponseEntity<List<MitigationDTO>> getMitigations() {
 
-        return ResponseEntity.ok(graphService.getMitigations());
+        BusinessProfileEntity profile =
+                businessProfileService.getLatestProfile();
+
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(
+                graphService.getMitigations(profile)
+        );
     }
 
 
