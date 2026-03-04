@@ -151,6 +151,32 @@ After successful startup, change it back to:
 
     http://localhost:5173
 
+## User Instructions
+
+1. Open the application in your browser:
+
+    `http://localhost:5173`
+
+2. On first load, the system will display a BusinessProfile questionnaire.
+
+3. Select the infrastructure components used by the business, such as:
+
+    - VPN access
+    - File Server usage
+    - SaaS applications
+    - Public web application
+    - Identity Provider
+
+4. Submit the questionnaire. The system will save this configuration and dynamically construct the network graph based on the selected infrastructure.
+
+5. The graph visualization will render the business network and available mitigation controls.
+
+6. Click Compute Attack Path to calculate the most likely attack path through the system.
+
+7. Enable or disable mitigation controls using the sidebar. Each mitigation increases the difficulty of certain attack edges.
+
+8. Recompute the attack path to see how the attack path changes when mitigations are applied.
+
 
 ## Contributor Guidelines
 
