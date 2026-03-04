@@ -175,9 +175,33 @@ private void removeNodeById(
     }
 }
 
-public List<MitigationDTO> getMitigations() {
+public List<MitigationDTO> getMitigations(BusinessProfileEntity profile) {
 
-    return mitigationRepository.findAll()
+    // Build the graph with the current profile filtering applied
+    DirectedWeightedMultigraph<Node, Edge> graph =
+            getFilteredGraph(profile, null);
+
+    // Collect mitigation IDs tied to edges that still exist
+    java.util.Set<Integer> mitigationIds = new java.util.HashSet<>();
+
+    for (EdgeEntity edgeEntity : edgeRepository.findAll()) {
+
+        String sourceId = edgeEntity.getSourceNode().getNodeType();
+        String targetId = edgeEntity.getTargetNode().getNodeType();
+
+        boolean edgeStillExists = graph.edgeSet().stream().anyMatch(edge ->
+                graph.getEdgeSource(edge).getId().equals(sourceId) &&
+                graph.getEdgeTarget(edge).getId().equals(targetId)
+        );
+
+        if (edgeStillExists) {
+
+            edgeEntity.getMitigationEffects().forEach(effect ->
+                    mitigationIds.add(effect.getMitigation().getMitID()));
+        }
+    }
+
+    return mitigationRepository.findAllById(mitigationIds)
             .stream()
             .map(m -> new MitigationDTO(
                     m.getMitID(),
