@@ -31,3 +31,19 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #475569; /* slate-600 */
 }
+
+#edgeTooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid #334155;
+  z-index: 10000;
+}
+
+.hidden {
+  display: none;
+}
