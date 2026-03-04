@@ -1,4 +1,7 @@
 import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+
+cytoscape.use(fcose);
 
 let cy = null;
 
@@ -97,6 +100,8 @@ const MITIGATION_COLORS = {
 
 // --- UTILITY FUNCTIONS ---
 
+const tooltip = document.getElementById("edgeTooltip");
+
 function toCytoscapeElements(apiGraph) {
   const nodes = (apiGraph.nodes ?? []).map((n) => ({
     data: { id: n.id, type: n.type ?? "", label: n.displayName ?? n.id },
@@ -111,7 +116,6 @@ function toCytoscapeElements(apiGraph) {
         target: e.target,
         attackAction: rawAction,
         weight: Number(e.weight ?? 1),
-        label: `${rawAction} (${e.weight ?? 1})`,
       },
     };
   });
@@ -217,7 +221,6 @@ function applyPathHighlight(pathResp) {
     const node = cy.getElementById(nodeObj.id);
     if (!node.empty()) {
       node.addClass("pathNode");
-      node.data("orderLabel", `${i + 1}`);
     }
   });
   for (let i = 0; i < pathResp.nodes.length - 1; i++) {
@@ -240,7 +243,7 @@ export function showDetailCard(data, type) {
   if (!card) return;
 
   card.classList.remove("hidden");
-  if (cy) { cy.resize(); cy.fit(undefined, 60); }
+  if (cy) { cy.resize(); cy.fit(undefined, 20); }
 
   title.className = "text-sm font-bold text-slate-400 uppercase tracking-widest";
 
@@ -293,7 +296,7 @@ export function showDetailCard(data, type) {
 export function hideDetailCard() {
   const card = document.getElementById("detailCard");
   if (card) card.classList.add("hidden");
-  if (cy) { cy.resize(); cy.fit(undefined, 60); }
+  if (cy) { cy.resize(); cy.fit(undefined, 20); }
 }
 
 // --- LOGIC EXPORTS ---
@@ -363,10 +366,15 @@ export async function renderGraph() {
       elements,
       wheelSensitivity: 0.3,
       layout: {
-        name: "breadthfirst",
-        directed: true,
-        padding: 40,
-        spacingFactor: 1.2
+        name: "fcose",
+        nodeDimensionsIncludeLabels: true,
+        padding: 80,
+        idealEdgeLength: 72,
+        nodeRepulsion: 8000,
+        edgeElasticity: 0.45,
+        gravity: 0.1,
+        numIter: 1500,
+        animate: false
       },
       style: [
         {
@@ -377,7 +385,7 @@ export async function renderGraph() {
             "text-valign": "center",
             "text-halign": "center",
             "text-wrap": "wrap",
-            "text-max-width": 90,
+            "text-max-width": 99,
             "line-height": 1.4,
             "font-size": 15,
             color: "#ffffff",
@@ -403,12 +411,12 @@ export async function renderGraph() {
         {
           selector: "edge",
           style: {
-            label: "data(label)",
+            label: "",
             "font-size": 9,
             color: "#cbd5e1",
             "text-rotation": "autorotate",
             width: 2,
-            "curve-style": "bezier",
+            "curve-style": "unbundled-bezier",
             "line-color": "#64748b",
             "target-arrow-shape": "triangle",
             "overlay-opacity": 0,
@@ -417,8 +425,8 @@ export async function renderGraph() {
           }
         },
         { selector: "edge.pathEdge", style: { width: 8, "line-color": "#facc15", "target-arrow-color": "#facc15", "z-index": 9999 } },
-        { selector: "node.pathNode", style: { label: "data(orderLabel)", "border-width": 6, "border-color": "#facc15", "background-color": "#fef08a", color: "#000", "z-index": 9999 } },
-        { selector: "node.hovered", style: { width: 150, height: 150, "font-size": 25, "border-width": 4, "border-color": "#ffffff", "z-index": 9999 } },
+        { selector: "node.pathNode", style: { "border-width": 6, "border-color": "#facc15", "background-color": "#fef08a", color: "#000", "z-index": 9999 } },
+        { selector: "node.hovered", style: { width: 130, height: 130, "font-size": 20, "border-width": 2, "border-color": "#ffffff", "z-index": 9999,} },
         {
           selector: "node:selected",
           style: {
@@ -427,6 +435,14 @@ export async function renderGraph() {
             "border-width": 6,
             "border-color": "#ffffff",
             "z-index": 9999
+          }
+        },
+        {
+          selector: "edge:selected",
+          style: {
+            "line-color": "#ffffff",
+            "target-arrow-color": "#ffffff",
+            "width": 4
           }
         },
         {
@@ -463,18 +479,41 @@ export async function renderGraph() {
 
     cy.on("mouseover", "node", (evt) => evt.target.addClass("hovered"));
     cy.on("mouseout", "node", (evt) => evt.target.removeClass("hovered"));
-    cy.on("mouseover", "edge", (evt) => evt.target.addClass("edgeHovered"));
-    cy.on("mouseout", "edge", (evt) => evt.target.removeClass("edgeHovered"));
+    cy.on("mouseover", "edge", (evt) => {
+    const edge = evt.target;
+
+    edge.addClass("edgeHovered");
+
+    const data = edge.data();
+    tooltip.innerHTML = `${data.attackAction}<br>Cost: ${data.weight}`;
+
+    tooltip.classList.remove("hidden");
+  });
+
+  cy.on("mousemove", "edge", (evt) => {
+  tooltip.style.left = evt.originalEvent.clientX + 12 + "px";
+  tooltip.style.top = evt.originalEvent.clientY + 12 + "px";
+  });
+
+  cy.on("mouseout", "edge", (evt) => {
+    evt.target.removeClass("edgeHovered");
+    tooltip.classList.add("hidden");
+  });
   } else {
     cy.elements().remove();
     cy.add(elements);
   }
 
   cy.layout({
-    name: "breadthfirst",
-    directed: true,
-    padding: 40,
-    spacingFactor: 1.2
+    name: "fcose",
+    nodeDimensionsIncludeLabels: true,
+    padding: 80,
+    idealEdgeLength: 72,
+    nodeRepulsion: 8000,
+    edgeElasticity: 0.45,
+    gravity: 0.1,
+    numIter: 1500,
+    animate: false
   }).run();
 
   await renderMitigations();
@@ -482,7 +521,7 @@ export async function renderGraph() {
   setTimeout(() => {
     if (cy) {
       cy.resize();
-      cy.fit(undefined, 60);
+      cy.fit(undefined, 20);
       if (status) {
         status.textContent = "System Ready";
         status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)] transition-all duration-500";
@@ -496,7 +535,7 @@ export async function renderGraph() {
 const container = document.getElementById('cy');
 if (container) {
   new ResizeObserver(() => {
-    if (cy) { cy.resize(); cy.fit(undefined, 60); }
+    if (cy) { cy.resize(); cy.fit(undefined, 20); }
   }).observe(container);
 }
 
