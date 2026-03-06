@@ -209,28 +209,73 @@ async function renderMitigations() {
 // --- PATH HIGHLIGHTING ---
 
 function clearPathHighlighting() {
+
   if (!cy) return;
-  cy.nodes().removeClass("pathNode");
-  cy.edges().removeClass("pathEdge");
-  cy.nodes().forEach((n) => n.removeData("orderLabel"));
+
+  cy.nodes().removeClass("pathNode dim");
+  cy.edges().removeClass("pathEdge dim");
+
 }
 
-function applyPathHighlight(pathResp) {
+async function animateAttackPath(pathResp) {
+
   clearPathHighlighting();
-  pathResp.nodes.forEach((nodeObj, i) => {
-    const node = cy.getElementById(nodeObj.id);
+
+  // dim the entire graph first
+  cy.nodes().addClass("dim");
+  cy.edges().addClass("dim");
+
+  for (let i = 0; i < pathResp.nodes.length; i++) {
+
+    const nodeId = pathResp.nodes[i].id;
+    const node = cy.getElementById(nodeId);
+
     if (!node.empty()) {
+
+      node.removeClass("dim");
       node.addClass("pathNode");
+
+      node.animate({
+        style: {
+          width: 135,
+          height: 135
+        },
+        duration: 120,
+        easing: "ease-out"
+      });
+
+      node.animate({
+        style: {
+          width: 110,
+          height: 110
+        },
+        duration: 220,
+        easing: "ease-in"
+      });
     }
-  });
-  for (let i = 0; i < pathResp.nodes.length - 1; i++) {
-    const source = pathResp.nodes[i].id;
-    const target = pathResp.nodes[i + 1].id;
-    cy.edges().forEach((edge) => {
-      if (edge.data("source") === source && edge.data("target") === target) {
-        edge.addClass("pathEdge");
-      }
-    });
+
+    if (i > 0) {
+
+      const prevId = pathResp.nodes[i - 1].id;
+
+      const edge = cy.edges().filter(e =>
+        e.data("source") === prevId &&
+        e.data("target") === nodeId
+      );
+
+      edge.removeClass("dim");
+      edge.addClass("pathEdge");
+
+      edge.animate({
+        style: {
+          width: 6
+        },
+        duration: 400,
+        easing: "ease-out"
+      });
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 420));
   }
 }
 
@@ -308,7 +353,7 @@ export async function computeAndShowPath() {
   try {
     status.textContent = "Computing...";
     const pathResp = await fetchAttackPath("ATTACKER", "CUSTOMER_DB");
-    applyPathHighlight(pathResp);
+    await animateAttackPath(pathResp);
     status.textContent = "Path Found";
     status.className = "font-mono text-rose-500 uppercase tracking-widest animate-pulse font-bold drop-shadow-[0_0_10px_rgba(244,63,94,0.7)]";
     if (pathResult && costValue) {
@@ -322,15 +367,24 @@ export async function computeAndShowPath() {
 }
 
 export function clearPath() {
+
   clearPathHighlighting();
+
+  // turn off all mitigation switches
+  const switches = document.querySelectorAll(".mitigation-checkbox");
+  switches.forEach(sw => sw.checked = false);
+
   const pathResult = document.getElementById("pathResult");
   const status = document.getElementById("status");
   const costValue = document.getElementById("totalCostValue");
+
   if (pathResult) pathResult.classList.add("hidden");
   if (costValue) costValue.innerHTML = "0";
+
   if (status) {
     status.textContent = "System Ready";
-    status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+    status.className =
+      "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
   }
 }
 
@@ -369,7 +423,7 @@ export async function renderGraph() {
         name: "fcose",
         nodeDimensionsIncludeLabels: true,
         padding: 80,
-        idealEdgeLength: 72,
+        idealEdgeLength: 60,
         nodeRepulsion: 8000,
         edgeElasticity: 0.45,
         gravity: 0.1,
@@ -401,7 +455,7 @@ export async function renderGraph() {
         { selector: 'node[id = "ATTACKER"]', style: { "background-color": "#a51433" } },
         { selector: 'node[id = "WEB_APP"]', style: { "background-color": "#2563eb" } },
         { selector: 'node[id = "VPN"]', style: { "background-color": "#7c3aed" } },
-        { selector: 'node[id = "EMPLOYEE_EMAIL"]', style: { "background-color": "#ea580c" } },
+        { selector: 'node[id = "EMPLOYEE_EMAIL"]', style: { "background-color": "#b65e2e" } },
         { selector: 'node[id = "EMPLOYEE_WORKSTATION"]', style: { "background-color": "#0891b2" } },
         { selector: 'node[id = "IDENTITY_PROVIDER"]', style: { "background-color": "#ca8a04" } },
         { selector: 'node[id = "ADMIN_ACCOUNT"]', style: { "background-color": "#b35d81" } },
@@ -424,15 +478,37 @@ export async function renderGraph() {
             "transition-duration": "0.2s"
           }
         },
-        { selector: "edge.pathEdge", style: { width: 8, "line-color": "#facc15", "target-arrow-color": "#facc15", "z-index": 9999 } },
-        { selector: "node.pathNode", style: { "border-width": 6, "border-color": "#facc15", "background-color": "#fef08a", color: "#000", "z-index": 9999 } },
+        {
+          selector: "edge.pathEdge",
+          style: {
+            width: 6,
+            "line-color": "#ef4444",
+            "target-arrow-color": "#ef4444",
+            "arrow-scale": 1.2,
+            "shadow-blur": 14,
+            "shadow-color": "#ef4444",
+            "shadow-opacity": 0.7
+          }
+        },
+        {
+          selector: "node.pathNode",
+          style: {
+            "border-width": 3,
+            "border-color": "#ef4444",
+            "background-color": "#f87171",
+            color: "#111",
+            "shadow-blur": 18,
+            "shadow-color": "#ef4444",
+            "shadow-opacity": 0.8
+          }
+        },
         { selector: "node.hovered", style: { width: 130, height: 130, "font-size": 20, "border-width": 2, "border-color": "#ffffff", "z-index": 9999,} },
         {
           selector: "node:selected",
           style: {
             width: 125,
             height: 125,
-            "border-width": 6,
+            "border-width": 3,
             "border-color": "#ffffff",
             "z-index": 9999
           }
@@ -453,6 +529,12 @@ export async function renderGraph() {
             "target-arrow-color": "#ffffff",
             "arrow-scale": 1.2,
             "z-index": 999
+          }
+        },
+        {
+          selector: ".dim",
+          style: {
+            opacity: 0.25
           }
         }
       ]
@@ -485,7 +567,7 @@ export async function renderGraph() {
     edge.addClass("edgeHovered");
 
     const data = edge.data();
-    tooltip.innerHTML = `${data.attackAction}<br>Cost: ${data.weight}`;
+    tooltip.innerHTML = `${data.attackAction}`;
 
     tooltip.classList.remove("hidden");
   });
@@ -499,6 +581,47 @@ export async function renderGraph() {
     evt.target.removeClass("edgeHovered");
     tooltip.classList.add("hidden");
   });
+
+  cy.on("drag", "node", (evt) => {
+
+    const node = evt.target;
+    const pos = node.renderedPosition();
+
+    const container = cy.container().getBoundingClientRect();
+
+    const margin = 60;
+
+    const nearEdge =
+      pos.x < margin ||
+      pos.y < margin ||
+      pos.x > container.width - margin ||
+      pos.y > container.height - margin;
+
+    if (nearEdge) {
+
+      const currentZoom = cy.zoom();
+
+      cy.zoom({
+        level: currentZoom * 0.98,
+        renderedPosition: {
+          x: container.width / 2,
+          y: container.height / 2
+        }
+      });
+
+    }
+
+  });
+
+  cy.on("dragfree", "node", () => {
+
+    cy.animate({
+      fit: { padding: 20},
+      duration: 300
+    });
+
+  });
+
   } else {
     cy.elements().remove();
     cy.add(elements);
@@ -506,13 +629,13 @@ export async function renderGraph() {
 
   cy.layout({
     name: "fcose",
+    spacingFactor: 1.25,
     nodeDimensionsIncludeLabels: true,
     padding: 80,
-    idealEdgeLength: 72,
+    idealEdgeLength: 60,
     nodeRepulsion: 8000,
     edgeElasticity: 0.45,
     gravity: 0.1,
-    numIter: 1500,
     animate: false
   }).run();
 
