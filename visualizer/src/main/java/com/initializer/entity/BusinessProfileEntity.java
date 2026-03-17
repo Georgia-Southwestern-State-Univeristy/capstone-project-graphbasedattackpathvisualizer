@@ -20,6 +20,10 @@ public class BusinessProfileEntity {
 
     private boolean usesIdentityProvider;
 
+    @OneToOne
+    @JoinColumn(name = "userID", unique = true)
+    private UserEntity user;
+
     public BusinessProfileEntity() {}
 
     public BusinessProfileEntity(boolean usesVPN,
@@ -41,6 +45,7 @@ public class BusinessProfileEntity {
     public boolean isUsesSaaS() { return usesSaaS; }
     public boolean isHasPublicWebApp() { return hasPublicWebApp; }
     public boolean isUsesIdentityProvider() { return usesIdentityProvider; }
+    public UserEntity getUser() { return user; }
 
     public void setUsesVPN(boolean usesVPN) { this.usesVPN = usesVPN; }
     public void setHasFileServer(boolean hasFileServer) { this.hasFileServer = hasFileServer; }
@@ -49,4 +54,5 @@ public class BusinessProfileEntity {
     public void setUsesIdentityProvider(boolean usesIdentityProvider) {
         this.usesIdentityProvider = usesIdentityProvider;
     }
+    public void setUser(UserEntity user) { this.user = user; }
 }
