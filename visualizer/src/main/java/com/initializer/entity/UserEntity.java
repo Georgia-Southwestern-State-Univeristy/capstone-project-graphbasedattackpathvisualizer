@@ -2,6 +2,7 @@ package com.initializer.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users")
@@ -15,11 +16,13 @@ public class UserEntity {
     private String userEmail;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String userPwHash;
 
     private LocalDateTime userCreatedAt;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private BusinessProfileEntity businessProfile;
 
     public UserEntity() {}

@@ -3,6 +3,7 @@ package com.initializer.services;
 import org.springframework.stereotype.Service;
 
 import com.initializer.entity.BusinessProfileEntity;
+import com.initializer.entity.UserEntity;
 import com.initializer.repository.BusinessProfileRepository;
 
 @Service
@@ -18,7 +19,7 @@ public class BusinessProfileService {
         return businessProfileRepository.save(profile);
     }
 
-    public BusinessProfileEntity getLatestProfile() {
-        return businessProfileRepository.findTopByOrderByProfileIDDesc();
+    public BusinessProfileEntity getProfileByUser(UserEntity user) {
+        return businessProfileRepository.findByUser(user);
     }
 }

@@ -10,7 +10,5 @@ import com.initializer.entity.UserEntity;
 public interface BusinessProfileRepository
         extends JpaRepository<BusinessProfileEntity, Integer> {
 
-    BusinessProfileEntity findTopByOrderByProfileIDDesc();
-
     BusinessProfileEntity findByUser(UserEntity user);
 }

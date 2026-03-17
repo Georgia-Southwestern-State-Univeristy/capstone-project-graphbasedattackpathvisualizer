@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 
 import com.initializer.graph.Node;
 import com.initializer.services.GraphEdgeDTO;
@@ -18,7 +19,10 @@ import com.initializer.services.MitigationDTO;
 import com.initializer.services.ShortestPathService;
 import com.initializer.services.AttackPathResult;
 import com.initializer.entity.BusinessProfileEntity;
+import com.initializer.entity.UserEntity;
 import com.initializer.services.BusinessProfileService;
+import com.initializer.services.UserService;
+import com.initializer.services.BusinessProfileDTO;
 
 // REST controller for exposing attack graph structure.
 
@@ -37,6 +41,9 @@ public class VisualizerController {
 
     @Autowired
     private BusinessProfileService businessProfileService;
+
+    @Autowired
+    private UserService userService;
     
     // Health check endpoint.
     
@@ -44,20 +51,25 @@ public class VisualizerController {
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Visualizer API is running");
     }
+
     @GetMapping("/test-db")
     public ResponseEntity<String> testDatabase() {
         String result = jdbcTemplate.queryForObject("SELECT 1", String.class);
         return ResponseEntity.ok("Database Connected: " + result);
     }
 
-    
-    // Returns the attack graph structure filtered by the active BusinessProfile.
-    // If no BusinessProfile exists, returns 404 to force questionnaire completion.
+    // Returns the attack graph structure filtered by the authenticated user's BusinessProfile.
     @GetMapping("/graph")
-    public ResponseEntity<Map<String, Object>> getGraph() {
+    public ResponseEntity<Map<String, Object>> getGraph(Authentication authentication) {
+
+        UserEntity user = userService.getUserByEmail(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             return ResponseEntity.notFound().build();
@@ -88,26 +100,37 @@ public class VisualizerController {
         return ResponseEntity.ok(response);
     }
 
-
-    // REST endpoint to compute and return the shortest attack path between two nodes 
-    // Expects 'source' and 'target' parameters.
-
+    // REST endpoint to compute shortest attack path
     @GetMapping("/path")
     public ResponseEntity<AttackPathResult> getAttackPath(
             @RequestParam String source,
             @RequestParam String target,
-            @RequestParam(required = false) List<Integer> mitigations) {
+            @RequestParam(required = false) List<Integer> mitigations,
+            Authentication authentication) {
 
-        AttackPathResult result = shortestPathService.computeAttackPath(source, target, mitigations);
+        UserEntity user = userService.getUserByEmail(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        AttackPathResult result =
+                shortestPathService.computeAttackPath(user, source, target, mitigations);
 
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/mitigations")
-    public ResponseEntity<List<MitigationDTO>> getMitigations() {
+    public ResponseEntity<List<MitigationDTO>> getMitigations(Authentication authentication) {
+
+        UserEntity user = userService.getUserByEmail(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             return ResponseEntity.notFound().build();
@@ -118,35 +141,75 @@ public class VisualizerController {
         );
     }
 
-
-    // REST endpoint to create and persist a new BusinessProfile configuration.
-    // Expects JSON body containing infrastructure toggles.
-    // Returns 201 Created with the saved profile.
+    // CREATE or UPDATE profile (DTO response)
     @PostMapping("/profile")
-    public ResponseEntity<BusinessProfileEntity> saveProfile(
-            @RequestBody BusinessProfileEntity profile) {
+    public ResponseEntity<BusinessProfileDTO> saveProfile(
+            @RequestBody BusinessProfileEntity profile,
+            Authentication authentication) {
 
-        BusinessProfileEntity savedProfile =
-                businessProfileService.saveProfile(profile);
+        UserEntity user = userService.getUserByEmail(authentication.getName());
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(savedProfile);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        BusinessProfileEntity existingProfile =
+                businessProfileService.getProfileByUser(user);
+
+        BusinessProfileEntity savedProfile;
+
+        if (existingProfile != null) {
+            existingProfile.setUsesVPN(profile.isUsesVPN());
+            existingProfile.setHasFileServer(profile.isHasFileServer());
+            existingProfile.setUsesSaaS(profile.isUsesSaaS());
+            existingProfile.setHasPublicWebApp(profile.isHasPublicWebApp());
+            existingProfile.setUsesIdentityProvider(profile.isUsesIdentityProvider());
+
+            savedProfile = businessProfileService.saveProfile(existingProfile);
+
+        } else {
+            profile.setUser(user);
+            savedProfile = businessProfileService.saveProfile(profile);
+        }
+
+        BusinessProfileDTO dto = new BusinessProfileDTO(
+                savedProfile.getProfileID(),
+                savedProfile.isUsesVPN(),
+                savedProfile.isHasFileServer(),
+                savedProfile.isUsesSaaS(),
+                savedProfile.isHasPublicWebApp(),
+                savedProfile.isUsesIdentityProvider()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-
-    // REST endpoint to retrieve the most recently created BusinessProfile.
-    // Returns 200 with profile if found, or 404 if no profile exists.
+    // GET profile (DTO response)
     @GetMapping("/profile")
-    public ResponseEntity<BusinessProfileEntity> getLatestProfile() {
+    public ResponseEntity<BusinessProfileDTO> getProfile(Authentication authentication) {
+
+        UserEntity user = userService.getUserByEmail(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(profile);
-    }
+        BusinessProfileDTO dto = new BusinessProfileDTO(
+                profile.getProfileID(),
+                profile.isUsesVPN(),
+                profile.isHasFileServer(),
+                profile.isUsesSaaS(),
+                profile.isHasPublicWebApp(),
+                profile.isUsesIdentityProvider()
+        );
 
+        return ResponseEntity.ok(dto);
+    }
 }
