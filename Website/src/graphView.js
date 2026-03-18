@@ -142,7 +142,9 @@ function animateValue(obj, start, end, duration) {
 // --- API FETCHERS ---
 
 async function fetchGraph() {
-  const res = await fetch("/api/graph");
+  const res = await fetch("/api/graph", {
+    credentials: "include"
+  });
   if (!res.ok) throw new Error(`GET /api/graph failed: ${res.status}`);
   return res.json();
 }
@@ -158,7 +160,9 @@ async function fetchAttackPath(source, target) {
     url += `&mitigations=${ids.join(",")}`;
   }
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+  credentials: "include"
+});
   const data = await res.json();
 
   if (!res.ok) throw new Error(data.message || `Request failed`);
@@ -167,8 +171,34 @@ async function fetchAttackPath(source, target) {
 }
 
 async function fetchMitigations() {
-  const res = await fetch("/api/mitigations");
+  const res = await fetch("/api/mitigations", {
+    credentials: "include"
+  });
   if (!res.ok) throw new Error("Failed to load mitigations");
+  return res.json();
+}
+
+async function fetchProfile() {
+  const res = await fetch("/api/profile", {
+    credentials: "include"
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to load profile");
+  }
+
+  return res.json();
+}
+
+async function fetchCurrentUserInfo() {
+  const res = await fetch("/api/auth/me", {
+    credentials: "include"
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to load current user");
+  }
+
   return res.json();
 }
 
@@ -388,15 +418,129 @@ export function clearPath() {
   }
 }
 
+export function resetProfileForm() {
+  const fields = [
+    "usesVPN",
+    "hasFileServer",
+    "usesSaaS",
+    "hasPublicWebApp",
+    "usesIdentityProvider"
+  ];
+
+  fields.forEach((id) => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) checkbox.checked = false;
+  });
+}
+
+function fillProfileForm(profile) {
+  const usesVPN = document.getElementById("usesVPN");
+  const hasFileServer = document.getElementById("hasFileServer");
+  const usesSaaS = document.getElementById("usesSaaS");
+  const hasPublicWebApp = document.getElementById("hasPublicWebApp");
+  const usesIdentityProvider = document.getElementById("usesIdentityProvider");
+
+  if (usesVPN) usesVPN.checked = !!profile.usesVPN;
+  if (hasFileServer) hasFileServer.checked = !!profile.hasFileServer;
+  if (usesSaaS) usesSaaS.checked = !!profile.usesSaaS;
+  if (hasPublicWebApp) hasPublicWebApp.checked = !!profile.hasPublicWebApp;
+  if (usesIdentityProvider) usesIdentityProvider.checked = !!profile.usesIdentityProvider;
+}
+
+function renderProfileSummary(profile) {
+  const content = document.getElementById("userProfileContent");
+  if (!content) return;
+
+  const yesNo = (value) => value ? "Yes" : "No";
+
+  content.innerHTML = `
+    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+      <span class="text-slate-300">Uses VPN</span>
+      <span class="font-semibold text-white">${yesNo(profile.usesVPN)}</span>
+    </div>
+
+    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+      <span class="text-slate-300">Has File Server</span>
+      <span class="font-semibold text-white">${yesNo(profile.hasFileServer)}</span>
+    </div>
+
+    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+      <span class="text-slate-300">Uses SaaS</span>
+      <span class="font-semibold text-white">${yesNo(profile.usesSaaS)}</span>
+    </div>
+
+    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
+      <span class="text-slate-300">Public Web App</span>
+      <span class="font-semibold text-white">${yesNo(profile.hasPublicWebApp)}</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+      <span class="text-slate-300">Uses Identity Provider</span>
+      <span class="font-semibold text-white">${yesNo(profile.usesIdentityProvider)}</span>
+    </div>
+  `;
+}
+
+export async function openUserProfileModal() {
+  const modal = document.getElementById("userProfileModal");
+  const content = document.getElementById("userProfileContent");
+  const emailEl = document.getElementById("userProfileEmail");
+
+  if (!modal || !content || !emailEl) return;
+
+  modal.classList.remove("hidden");
+  content.innerHTML = `<p class="text-slate-400">Loading profile...</p>`;
+  emailEl.textContent = "Loading...";
+
+  try {
+    const [profile, user] = await Promise.all([
+      fetchProfile(),
+      fetchCurrentUserInfo()
+    ]);
+
+    renderProfileSummary(profile);
+    emailEl.textContent = user.userEmail ?? "Unavailable";
+  } catch {
+    content.innerHTML = `<p class="text-red-400">Unable to load saved profile.</p>`;
+    emailEl.textContent = "Unavailable";
+  }
+}
+
+export function closeUserProfileModal() {
+  const modal = document.getElementById("userProfileModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+export async function openProfileEditor() {
+  try {
+    const profile = await fetchProfile();
+    fillProfileForm(profile);
+  } catch {
+    resetProfileForm();
+  }
+
+  closeUserProfileModal();
+
+  const questionnaireModal = document.getElementById("profileModal");
+  if (questionnaireModal) questionnaireModal.classList.remove("hidden");
+}
+
 export async function initializeApp() {
   try {
-    const res = await fetch("/api/profile");
+    const res = await fetch("/api/profile", {
+      credentials: "include"
+    });
 
     if (!res.ok) throw new Error("No profile");
+
+    const modal = document.getElementById("profileModal");
+    if (modal) modal.classList.add("hidden");
 
     await renderGraph();
 
   } catch {
+    resetProfileForm();
+
     const modal = document.getElementById("profileModal");
     if (modal) modal.classList.remove("hidden");
   }
@@ -663,12 +807,31 @@ if (container) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-
   const saveBtn = document.getElementById("saveProfileBtn");
+  const profileBtn = document.getElementById("profileBtn");
+  const closeUserProfileModalBtn = document.getElementById("closeUserProfileModal");
+  const userProfileBackdrop = document.getElementById("userProfileBackdrop");
+  const editProfileConfigBtn = document.getElementById("editProfileConfigBtn");
+
+  profileBtn?.addEventListener("click", async () => {
+    await openUserProfileModal();
+  });
+
+  closeUserProfileModalBtn?.addEventListener("click", () => {
+    closeUserProfileModal();
+  });
+
+  userProfileBackdrop?.addEventListener("click", () => {
+    closeUserProfileModal();
+  });
+
+  editProfileConfigBtn?.addEventListener("click", async () => {
+    await openProfileEditor();
+  });
+
   if (!saveBtn) return;
 
   saveBtn.addEventListener("click", async () => {
-
     const profile = {
       usesVPN: document.getElementById("usesVPN").checked,
       hasFileServer: document.getElementById("hasFileServer").checked,
@@ -680,11 +843,11 @@ document.addEventListener("DOMContentLoaded", () => {
     await fetch("/api/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(profile)
     });
 
-    document.getElementById("profileModal")
-      ?.classList.add("hidden");
+    document.getElementById("profileModal")?.classList.add("hidden");
 
     await renderGraph();
   });
