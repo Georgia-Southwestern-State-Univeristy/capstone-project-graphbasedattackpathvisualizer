@@ -6,13 +6,37 @@ This project models potential cyber attack paths within a small business IT envi
 
 The system computes the shortest attack path to high-value assets using Dijkstra's algorithm. It also demonstrates how security mitigations increase attack difficulty by dynamically adjusting edge weights.
 
+The application includes user authentication and user-specific infrastructure modeling. Each authenticated user maintains their own BusinessProfile configuration, ensuring that graph generation, mitigation effects, and attack path computation are isolated per user.
+
 This tool is designed to be an educational cybersecurity visualization platform.
 
-### BusinessProfile-Based Dynamic Topology
+### BusinessProfile-Based Dynamic Topology (User-Specific)
 
-Before the graph is rendered, the system requires a BusinessProfile configuration. On first load, users must complete a questionnaire that defines optional infrastructure components such as VPN access, File Server usage, SaaS integrations, Public Web App exposure, and Identity Provider usage.
+Each authenticated user maintains their own BusinessProfile, which defines the structure of their simulated business infrastructure.
 
-This configuration is persisted in the database and used to dynamically filter the graph structure. Nodes and edges are conditionally removed based on the saved BusinessProfile, and Dijkstra’s algorithm executes on the filtered graph instance. As a result, business structure directly influences the computed attack path.
+On first use, users complete a questionnaire that specifies optional components such as VPN access, File Server usage, SaaS integrations, Public Web App exposure, and Identity Provider usage.
+
+This configuration is stored in the database and is uniquely associated with the authenticated user.
+
+For every request, the backend dynamically reconstructs the graph based on the user's BusinessProfile. Nodes and edges are conditionally included or excluded, and Dijkstra’s algorithm executes on the filtered graph instance.
+
+As a result, each user interacts with an isolated attack surface tailored to their selected infrastructure.
+
+## Authentication & Security
+
+The system uses Spring Security with session-based authentication.
+
+- Users register and log in using email and password
+- Passwords are securely stored using BCrypt hashing
+- Upon successful login, a session (JSESSIONID) is created
+- All protected API endpoints require authentication
+- The authenticated user is retrieved from the SecurityContext for each request
+
+This enables:
+
+- User-specific BusinessProfile storage
+- Isolated graph generation per user
+- Secure access to backend endpoints
 
 ## Tech Stack
 
@@ -32,6 +56,8 @@ This configuration is persisted in the database and used to dynamically filter t
 - **Repository Hosting / Collaboration:** GitHub
 - **API Architecture:** RESTful API
 - **Data Format:** JSON
+- **Security:** Spring Security (Session-Based Authentication)
+- **Password Hashing:** BCrypt
 
 
 ## Installation & Setup
@@ -115,21 +141,41 @@ After successful startup, change it back to:
 
     http://localhost:8080
 
-#### Test Endpoints
+#### Authentication Endpoints
 
-- `GET /api/health`
+- `POST /api/auth/register`  
+    Registers a new user account
+
+- `POST /api/auth/login`  
+    Authenticates a user and creates a session
+
+- `POST /api/auth/logout`  
+    Logs out the current user and invalidates the session
+
+- `GET /api/auth/me`  
+    Returns the currently authenticated user
+
+---
+
+#### Application Endpoints (Authenticated)
+
+- `GET /api/health`  
     Returns a confirmation message indicating that the API is running
-- `GET /api/graph`
-    Returns the full attack graph structure (nodes and edges) in JSON format
-- `GET /api/path?source={sourceId}&target={targetId}`
-    Computes and returns the shortest attack path between the specified source and target nodes, 
-    including ordered nodes, ordered edges, and total path cost
-- `GET /api/mitigations`
-    Returns all available mitigation controls and their IDs
-- `GET /api/profile`
-    Returns the most recently saved BusinessProfile configuration. If no profile exists, the frontend will display the BusinessProfile questionnaire before rendering the graph.
-- `POST /api/profile`
-    Saves a new BusinessProfile configuration. This configuration is used to dynamically filter the graph structure before path computation.
+
+- `GET /api/profile`  
+    Returns the authenticated user's BusinessProfile configuration
+
+- `POST /api/profile`  
+    Creates or updates the authenticated user's BusinessProfile
+
+- `GET /api/graph`  
+    Returns the attack graph filtered by the authenticated user's BusinessProfile
+
+- `GET /api/path?source={sourceId}&target={targetId}`  
+    Computes and returns the shortest attack path for the authenticated user
+
+- `GET /api/mitigations`  
+    Returns all available mitigation controls for the authenticated user's graph
 
 ---
 
@@ -155,11 +201,13 @@ After successful startup, change it back to:
 
 1. Open the application in your browser:
 
-    `http://localhost:5173`
+    http://localhost:5173
 
-2. On first load, the system will display a BusinessProfile questionnaire.
+2. Create an account or log in using your credentials.
 
-3. Select the infrastructure components used by the business, such as:
+3. After logging in, the system will check for an existing BusinessProfile.
+
+4. If no profile exists, complete the BusinessProfile questionnaire by selecting infrastructure components such as:
 
     - VPN access
     - File Server usage
@@ -167,15 +215,15 @@ After successful startup, change it back to:
     - Public web application
     - Identity Provider
 
-4. Submit the questionnaire. The system will save this configuration and dynamically construct the network graph based on the selected infrastructure.
+5. Submit the questionnaire. The system will save this configuration and dynamically construct the network graph based on your selections.
 
-5. The graph visualization will render the business network and available mitigation controls.
+6. The graph visualization will render your personalized business network and available mitigation controls.
 
-6. Click Compute Attack Path to calculate the most likely attack path through the system.
+7. Click "Compute Path" to calculate the most likely attack path.
 
-7. Enable or disable mitigation controls using the sidebar. Each mitigation increases the difficulty of certain attack edges.
+8. Enable or disable mitigation controls using the sidebar. Each mitigation increases the difficulty of specific attack steps.
 
-8. Recompute the attack path to see how the attack path changes when mitigations are applied.
+9. Recompute the attack path to observe how security controls impact attack feasibility.
 
 
 ## Contributor Guidelines
