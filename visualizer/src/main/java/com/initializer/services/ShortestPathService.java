@@ -13,6 +13,7 @@ import com.initializer.graph.Edge;
 import com.initializer.graph.Node;
 import com.initializer.graph.NodeType;
 import com.initializer.entity.BusinessProfileEntity;
+import com.initializer.entity.UserEntity;
 
 @Service
 public class ShortestPathService {
@@ -27,15 +28,15 @@ public class ShortestPathService {
         this.businessProfileService = businessProfileService;
     }
 
-    // Computes the shortest attack path and returns ordered nodes, edges, and total path cost
+    // Computes the shortest attack path for the authenticated user's profile
     public AttackPathResult computeAttackPath(
+        UserEntity user,
         String sourceId,
         String targetId,
         List<Integer> enabledMitigationIds) {
 
-        // Always get a fresh graph
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             throw new InvalidNodeException("Business profile not configured.");
@@ -69,11 +70,11 @@ public class ShortestPathService {
         );
     }
 
-    // Returns attacker entry nodes from a fresh graph
-    public List<Node> getAttackerEntryNodes() {
+    // Returns attacker entry nodes from the authenticated user's graph
+    public List<Node> getAttackerEntryNodes(UserEntity user) {
 
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             throw new InvalidNodeException("Business profile not configured.");
@@ -88,11 +89,11 @@ public class ShortestPathService {
             .toList();
     }
 
-    // Returns high-value target nodes from a fresh graph
-    public List<Node> getHighValueTargetNodes() {
+    // Returns high-value target nodes from the authenticated user's graph
+    public List<Node> getHighValueTargetNodes(UserEntity user) {
 
         BusinessProfileEntity profile =
-                businessProfileService.getLatestProfile();
+                businessProfileService.getProfileByUser(user);
 
         if (profile == null) {
             throw new InvalidNodeException("Business profile not configured.");
