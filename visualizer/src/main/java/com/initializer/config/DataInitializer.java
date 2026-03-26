@@ -56,6 +56,7 @@ public class DataInitializer implements CommandLineRunner {
 
         System.out.println("Seeding nodes...");
 
+        // Original nodes
         nodeRepository.save(new NodeEntity(NodeType.ATTACKER.name(), "Attacker"));
         nodeRepository.save(new NodeEntity(NodeType.EMPLOYEE_EMAIL.name(), "Employee Email"));
         nodeRepository.save(new NodeEntity(NodeType.VPN.name(), "VPN / Remote Access"));
@@ -66,6 +67,18 @@ public class DataInitializer implements CommandLineRunner {
         nodeRepository.save(new NodeEntity(NodeType.FILE_SERVER.name(), "File Server"));
         nodeRepository.save(new NodeEntity(NodeType.CUSTOMER_DB.name(), "Customer Database"));
         nodeRepository.save(new NodeEntity(NodeType.THIRD_PARTY_SAAS.name(), "Third-Party SaaS"));
+
+        // New nodes for expanded 20-node graph
+        nodeRepository.save(new NodeEntity(NodeType.EMAIL_SERVER.name(), "Email Server"));
+        nodeRepository.save(new NodeEntity(NodeType.DOMAIN_CONTROLLER.name(), "Domain Controller"));
+        nodeRepository.save(new NodeEntity(NodeType.INTERNAL_APP.name(), "Internal App"));
+        nodeRepository.save(new NodeEntity(NodeType.HR_SYSTEM.name(), "HR System"));
+        nodeRepository.save(new NodeEntity(NodeType.FINANCE_SYSTEM.name(), "Finance System"));
+        nodeRepository.save(new NodeEntity(NodeType.BACKUP_SERVER.name(), "Backup Server"));
+        nodeRepository.save(new NodeEntity(NodeType.MDM_SERVER.name(), "MDM Server"));
+        nodeRepository.save(new NodeEntity(NodeType.WIRELESS_ACCESS_POINT.name(), "Wireless Access Point"));
+        nodeRepository.save(new NodeEntity(NodeType.FIREWALL.name(), "Firewall"));
+        nodeRepository.save(new NodeEntity(NodeType.DNS_SERVER.name(), "DNS Server"));
 
         System.out.println("Nodes seeded successfully.");
     }

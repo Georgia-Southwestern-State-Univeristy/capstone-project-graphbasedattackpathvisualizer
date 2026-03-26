@@ -30,6 +30,12 @@ Exploiting a web application generally requires technical knowledge, vulnerabili
 ### VPN_CREDENTIAL_THEFT — Weight: 5
 Compromising VPN access requires obtaining valid credentials and understanding how to connect to the remote access service. Even without additional protections, VPN access presents a higher technical and exposure barrier than phishing or basic credential reuse.
 
+### WIRELESS_NETWORK_COMPROMISE — Weight: 4
+Compromising a wireless network typically requires exploiting weak encryption, poor configuration, or exposed management interfaces. This requires technical knowledge and proximity or access to the network.
+
+### PERIMETER_DEVICE_EXPLOIT — Weight: 5
+Exploiting perimeter devices such as firewalls requires identifying exposed services, misconfigurations, or firmware vulnerabilities. These attacks often require advanced technical skill and understanding of network infrastructure.
+
 ---
 
 ## Lateral Movement and Execution
@@ -42,6 +48,15 @@ Once valid credentials are obtained and remote access services are exposed, logg
 
 ### CREDENTIAL_REUSE — Weight: 2
 Reusing compromised credentials across systems is a common and low-effort technique once credentials have been obtained.
+
+### LOCAL_NETWORK_ACCESS — Weight: 2
+Once connected to the internal network, accessing nearby systems is relatively easy due to implicit trust and open communication between devices.
+
+### INTERNAL_SERVICE_PIVOT — Weight: 3
+Pivoting into internal services requires awareness of available systems and the ability to exploit weak authentication or exposed services within the internal network.
+
+### NETWORK_DISCOVERY — Weight: 2
+Enumerating internal network services such as DNS or directory infrastructure is a low-effort activity once internal access is obtained.
 
 ---
 
@@ -56,6 +71,15 @@ OAuth tokens may be obtained through phishing, malware, or insecure storage, req
 ### OVER_PRIVILEGED_ROLE_ASSIGNMENT — Weight: 5
 Gaining elevated access through excessive role assignments requires access to identity systems or exploitation of role misconfiguration, making it a high-effort attack.
 
+### DOMAIN_PRIVILEGE_ESCALATION — Weight: 5
+Gaining elevated privileges through domain infrastructure such as Active Directory requires significant effort, including exploiting misconfigurations or credential exposure.
+
+### MDM_PRIVILEGE_ABUSE — Weight: 5
+Abusing device management platforms requires access to centralized control systems and the ability to execute privileged actions across managed devices.
+
+### MAILBOX_SERVER_ABUSE — Weight: 3
+Abusing an email server or mailbox infrastructure requires access to a compromised email account or related administrative functionality. This can allow attackers to manipulate mail flow, access stored messages, or expand visibility across the organization with moderate effort.
+
 ---
 
 ## Workstation-Based Escalation
@@ -69,9 +93,24 @@ Privilege escalation requires exploiting operating system or software weaknesses
 ### DIRECT_NETWORK_ACCESS — Weight: 3
 Accessing internal network resources requires internal positioning and awareness of network structure, resulting in moderate difficulty.
 
+### INTERNAL_APPLICATION_ACCESS — Weight: 2
+Accessing internal business applications is typically easy once an attacker has compromised a workstation, as these systems often rely on existing user sessions or implicit trust.
+
+### HR_SYSTEM_ACCESS — Weight: 2
+HR systems are often accessible to internal users with minimal restrictions, making access relatively easy once inside the network.
+
+### FINANCE_SYSTEM_ACCESS — Weight: 3
+Finance systems typically enforce stricter controls than general applications, requiring additional effort or permissions to access sensitive financial data.
+
+### BACKUP_SYSTEM_ACCESS — Weight: 3
+Backup systems require internal positioning and knowledge of infrastructure, making access moderately difficult.
+
+### DEVICE_MANAGEMENT_ABUSE — Weight: 4
+Abusing device management systems requires understanding of administrative tools and may involve exploiting privileged access or misconfigurations.
+
 ---
 
-## Data and Credential Exposure
+## Data Access and Exposure
 
 ### STORED_CREDENTIAL_LEAK — Weight: 3
 Credentials stored in configuration files or scripts are common but require discovery and access to the relevant storage locations.
@@ -81,5 +120,17 @@ Accessing data through application or API integrations requires understanding ho
 
 ### ADMIN_DATABASE_ACCESS — Weight: 1
 Once an administrative account is compromised, direct access to sensitive databases is trivial.
+
+### APPLICATION_DATABASE_ACCESS — Weight: 4
+Accessing databases through application layers requires understanding application logic, credentials, or service integrations, making it a technically demanding attack.
+
+### HR_DATA_ACCESS — Weight: 3
+Accessing sensitive HR data requires navigating application permissions and data structures, typically requiring moderate effort.
+
+### FINANCIAL_DATA_ACCESS — Weight: 3
+Financial data is usually protected by stricter controls, but may still be accessible through compromised internal systems or integrations.
+
+### BACKUP_DATA_EXPOSURE — Weight: 3
+Backup systems may contain sensitive data but require discovery and access to storage locations or backup infrastructure.
 
 ---
