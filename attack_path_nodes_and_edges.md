@@ -13,7 +13,7 @@
 6. Identity Provider (IdP)
 7. Admin Account
 8. File Server
-9. Customer DB (Sensitive Data)
+9. Sensitive Data Store
 10. Third-Party SaaS App
 11. Email Server
 12. Domain Controller
@@ -75,75 +75,83 @@
 13. Employee Email → Email Server  
     - Mailbox / Server Abuse (Email Server Hardening enabled = +3)
 
+### From Email Server
+14. Email Server → Employee Workstation  
+    - Malicious Email Delivery / Mail Rule Abuse (Email Security Filtering enabled = +3) 
+
 ### From Identity Provider (IdP)
-14. Identity Provider (IdP) → Admin Account  
+15. Identity Provider (IdP) → Admin Account  
    - Over-Privileged Role Assignment (Role-based access contol (RBAC) enforcement enabled = +3)
 
 ### From Employee Workstation
-15. Employee Workstation → File Server  
+16. Employee Workstation → File Server  
     - Access Shared Drive (File Server Access Controls enabled = +2)
 
-16. Employee Workstation → Admin Account  
+17. Employee Workstation → Admin Account  
     - Privilege Escalation / Credential Dumping (Privileged Account Hardening enabled = +5)
 
-17. Employee Workstation → Customer DB  
+18. Employee Workstation → Sensitive Data Store  
     - Direct Network Access (Network Segmentation enabled = +3)
 
-18. Employee Workstation → Domain Controller  
+19. Employee Workstation → Domain Controller  
     - Domain Privilege Escalation (Domain Controller Hardening enabled = +5)
 
-19. Employee Workstation → Internal App  
+20. Employee Workstation → Internal App  
     - Internal Application Access (Internal Application Hardening enabled = +3)
 
-20. Employee Workstation → HR System  
+21. Employee Workstation → HR System  
     - HR System Access (HR System Access Controls enabled = +3)
 
-21. Employee Workstation → Finance System  
+22. Employee Workstation → Finance System  
     - Finance System Access (Finance System Access Controls enabled = +4)
 
-22. Employee Workstation → Backup Server  
+23. Employee Workstation → Backup Server  
     - Backup System Access (Backup Server Protection enabled = +3)
 
-23. Employee Workstation → MDM Server  
+24. Employee Workstation → MDM Server  
     - Device Management Abuse (MDM Security Controls enabled = +4)
 
-24. Employee Workstation → DNS Server  
+25. Employee Workstation → DNS Server  
     - Network Discovery (DNS Security Monitoring enabled = +2)
 
+    ### From DNS Server
+26. DNS Server → Domain Controller  
+    - Internal Service Pivot (DNS Access Restrictions enabled = +3)
+
 ### From Domain Controller
-25. Domain Controller → Admin Account  
+27. Domain Controller → Admin Account  
     - Domain Privilege Escalation (Domain Controller Hardening enabled = +4)
 
 ### From MDM Server
-26. MDM Server → Admin Account  
+28. MDM Server → Admin Account  
     - MDM Privilege Abuse (MDM Security Controls enabled = +4)
 
 ### From File Server
-27. File Server → Customer DB  
+29. File Server → Sensitive Data Store  
     - Stored Credentials / Config Leak
 
 ### From Third-Party SaaS App
-28. Third-Party SaaS App → Customer DB  
+30. Third-Party SaaS App → Sensitive Data Store  
     - API Access / Data Sync
 
 ### From Internal App
-29. Internal App → Customer DB  
+31. Internal App → Sensitive Data Store  
     - Application Database Access (Internal Application Hardening enabled = +4)
 
 ### From HR System
-30. HR System → Customer DB  
+32. HR System → Sensitive Data Store  
     - HR Data Access / Integration Abuse (HR System Access Controls enabled = +3)
 
 ### From Finance System
-31. Finance System → Customer DB  
+33. Finance System → Sensitive Data Store  
     - Financial Data Access (Finance System Access Controls enabled = +3)
 
 ### From Backup Server
-32. Backup Server → Customer DB  
+34. Backup Server → Sensitive Data Store  
     - Backup Data Exposure (Backup Server Protection enabled = +3)
 
 ### From Admin Account
-33. Admin Account → Customer DB  
+35. Admin Account → Sensitive Data Store  
     - Admin DB Access
 
 ---

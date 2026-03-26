@@ -58,6 +58,9 @@ Pivoting into internal services requires awareness of available systems and the 
 ### NETWORK_DISCOVERY — Weight: 2
 Enumerating internal network services such as DNS or directory infrastructure is a low-effort activity once internal access is obtained.
 
+### MALICIOUS_EMAIL_DELIVERY — Weight: 3
+This attack involves abusing a compromised email server to deliver malicious attachments, links, or manipulate mailbox rules to facilitate further compromise. It requires control over email infrastructure and user interaction, making it moderately difficult.
+
 ---
 
 ## Identity and Access Abuse
