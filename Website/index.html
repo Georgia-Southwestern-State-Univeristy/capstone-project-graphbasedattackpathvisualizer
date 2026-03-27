@@ -235,7 +235,7 @@
               </button>
             </div>
             
-            <div id="cardContent" class="p-4 space-y-5 overflow-y-auto"></div>
+            <div id="cardContent" class="p-4 space-y-5 overflow-y-auto sidebar-scroll"></div>
             
             <div class="p-2 bg-slate-900/20 border-t border-slate-700 mt-auto text-center">
               <p class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Security Engine</p>
@@ -251,7 +251,7 @@
   <div id="userProfileBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
   <div class="absolute inset-0 flex items-center justify-center p-4">
-    <div class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl overflow-hidden">
+    <div class="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl overflow-hidden">
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700">
         <h2 class="text-base font-semibold text-white uppercase tracking-wider">My Profile</h2>
 
@@ -262,7 +262,7 @@
         </button>
       </div>
 
-      <div class="px-6 py-5 space-y-4">
+      <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0 sidebar-scroll">
   <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4">
     <div class="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-3">Account</div>
 
@@ -309,42 +309,267 @@
   <div class="absolute inset-0 flex items-center justify-center p-4">
 
     <!-- modal panel-->
-    <div class="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl">
-
+    <div class="w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 shadow-2xl overflow-hidden">
       <!-- header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700">
         <h2 class="text-base font-semibold text-white uppercase tracking-wider">Configure Your Business</h2>
       </div>
 
       <!-- questionnaire -->
-      <div class="px-6 py-5 space-y-4 text-sm">
+      <div class="px-6 py-5 space-y-6 text-sm flex-1 min-h-0 overflow-y-auto sidebar-scroll">
+        <div class="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-slate-900 text-xs font-bold shrink-0">
+            i
+          </div>
 
-    <label class="flex justify-between items-center">
-      <span>Uses VPN</span>
-      <input type="checkbox" id="usesVPN" class="accent-emerald-500">
-    </label>
+          <div class="text-sm text-emerald-200 leading-relaxed">
+            <span class="font-semibold text-emerald-300">Configure Your Environment:</span>
+            Select which systems your business uses. These choices determine how your network is modeled and which attack paths are possible.
+          </div>
+        </div>
 
-    <label class="flex justify-between items-center">
-      <span>Has File Server</span>
-      <input type="checkbox" id="hasFileServer" class="accent-emerald-500">
-    </label>
+        <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">External Access &amp; Perimeter</h3>
 
-    <label class="flex justify-between items-center">
-      <span>Uses SaaS</span>
-      <input type="checkbox" id="usesSaaS" class="accent-emerald-500">
-    </label>
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Allows employees to access systems remotely (VPN)</span>
+              <input type="checkbox" id="usesVPN" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A VPN lets employees securely connect to your company’s network from outside the office, such as from home or while traveling. It creates a protected connection so internal systems can be accessed safely over the internet. Examples include Cisco AnyConnect, OpenVPN, NordLayer, and other company-issued remote access tools.
+              </p>
+            </details>
+          </div>
 
-    <label class="flex justify-between items-center">
-      <span>Public Web App</span>
-      <input type="checkbox" id="hasPublicWebApp" class="accent-emerald-500">
-    </label>
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Has a public website or web application</span>
+              <input type="checkbox" id="hasPublicWebApp" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                This refers to anything your business hosts that is accessible to the public over the internet, such as a website, customer portal, or online service. Attackers often target these because they are exposed externally. Examples include company websites, login portals, online stores, and booking systems.
+              </p>
+            </details>
+          </div>
 
-    <label class="flex justify-between items-center">
-      <span>Uses Identity Provider</span>
-      <input type="checkbox" id="usesIdentityProvider" class="accent-emerald-500">
-    </label>
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses a wireless network (Wi-Fi)</span>
+              <input type="checkbox" id="hasWirelessAccessPoint" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                If your office provides Wi-Fi for employees or guests, you are using a wireless network. These networks can introduce security risks if not properly secured or segmented. Examples include office Wi-Fi routers, guest networks, and enterprise wireless systems like Ubiquiti or Cisco.
+              </p>
+            </details>
+          </div>
 
-  </div>
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses a firewall to protect your network</span>
+              <input type="checkbox" id="hasFirewall" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A firewall monitors and controls traffic entering and leaving your network to block unauthorized access. Most businesses have one, even if it’s built into a router or provided by a cloud service. Examples include Fortinet, Palo Alto, Cisco ASA, built-in router firewall, and cloud firewalls in AWS or Azure.
+              </p>
+            </details>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Identity, Email &amp; Cloud Services</h3>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses single sign-on (SSO) or an identity provider</span>
+              <input type="checkbox" id="usesIdentityProvider" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                An identity provider allows employees to log in once and access multiple systems without re-entering credentials. It centralizes authentication and is commonly used in modern businesses. Examples include Okta, Microsoft Azure AD, Google Workspace login, and OneLogin.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses a business email system</span>
+              <input type="checkbox" id="hasEmailServer" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                If your organization uses email accounts tied to your business domain, you have a business email system. Email is one of the most common entry points for attacks like phishing. Examples include Microsoft Outlook/Exchange, Gmail for business, and hosted email servers.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses cloud-based business applications (SaaS)</span>
+              <input type="checkbox" id="usesSaaS" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                SaaS applications are tools hosted by third-party providers that your business accesses through the internet. These are very common and often integrate with your login system. Examples include Google Workspace, Microsoft 365, Salesforce, Slack, and Dropbox.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Manages employee devices with MDM</span>
+              <input type="checkbox" id="hasMDMServer" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                Mobile Device Management, or MDM, lets companies monitor, secure, and control employee laptops and mobile devices. This is common in organizations that issue company devices. Examples include Microsoft Intune, Jamf, and VMware Workspace ONE.
+              </p>
+            </details>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Internal Infrastructure</h3>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Stores shared files on a central server</span>
+              <input type="checkbox" id="hasFileServer" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A file server is a central place where employees store and access shared documents. It can be on-site or in the cloud but is used for internal collaboration. Examples include network shared drives, Windows file servers, NAS devices, and shared folders.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses centralized login management (domain controller)</span>
+              <input type="checkbox" id="hasDomainController" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A domain controller manages user accounts, passwords, and permissions across your organization. If employees log into a company network account, this likely exists. Examples include Active Directory and Windows Server domain environments.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses internal business applications</span>
+              <input type="checkbox" id="hasInternalApp" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                These are systems only accessible from inside your organization, not the public internet. They often support operations like inventory, dashboards, or internal workflows. Examples include internal dashboards, company tools, and intranet apps.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses an internal DNS system</span>
+              <input type="checkbox" id="hasDNSServer" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A DNS server helps devices find each other on the network using names instead of IP addresses. Many businesses use internal DNS without realizing it. Examples include Windows DNS, router-based DNS, and enterprise DNS services.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Maintains backups of important data</span>
+              <input type="checkbox" id="hasBackupServer" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A backup system stores copies of important data so it can be recovered after data loss, ransomware, or system failure. Most businesses use some form of backup, even if automated. Examples include cloud backups, external drives, backup servers, and services like Veeam or Carbonite.
+              </p>
+            </details>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Business Systems</h3>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses a system to manage employee information (HR)</span>
+              <input type="checkbox" id="hasHRSystem" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                An HR system stores employee records, payroll data, and personal information. These systems often contain sensitive data and are high-value targets. Examples include Workday, ADP, and BambooHR.
+              </p>
+            </details>
+          </div>
+
+          <div class="space-y-2">
+            <label class="flex justify-between items-center">
+              <span>Uses a system for financial operations</span>
+              <input type="checkbox" id="hasFinanceSystem" class="accent-emerald-500">
+            </label>
+            <details class="text-xs">
+              <summary class="cursor-pointer text-slate-400 hover:text-white text-[10px] flex items-center gap-1 list-none">
+                ⓘ More info
+              </summary>
+              <p class="mt-2 text-slate-300 bg-slate-900/60 border border-slate-700 rounded-md p-3 leading-relaxed">
+                A finance system handles accounting, payments, and financial records. These systems are critical and often targeted for fraud or data theft. Examples include QuickBooks, SAP, Oracle Financials, and payroll systems.
+              </p>
+            </details>
+          </div>
+        </div>
+
+      </div>
 
   <!-- save button -->
   <div class="px-6 py-4 border-t border-slate-700">

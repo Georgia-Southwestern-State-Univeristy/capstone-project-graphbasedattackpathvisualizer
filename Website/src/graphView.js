@@ -17,7 +17,17 @@ const NODE_DESCRIPTIONS = {
   ADMIN_ACCOUNT: "High-privilege credentials capable of managing databases and servers.",
   CUSTOMER_DB: "The ultimate target; contains sensitive customer PII and records.",
   FILE_SERVER: "Internal storage containing shared documents and configuration files.",
-  THIRD_PARTY_SAAS: "External cloud services (SaaS) integrated with corporate identity."
+  THIRD_PARTY_SAAS: "External cloud services (SaaS) integrated with corporate identity.",
+  EMAIL_SERVER: "Business email infrastructure used for message delivery and mail access.",
+  DOMAIN_CONTROLLER: "Centralized authentication and directory management server.",
+  INTERNAL_APP: "Internal business application accessible from inside the organization.",
+  HR_SYSTEM: "Human resources platform containing employee-related records.",
+  FINANCE_SYSTEM: "Financial system containing accounting or payment-related data.",
+  BACKUP_SERVER: "System used to store or manage organization backups.",
+  MDM_SERVER: "Mobile device management platform used to manage endpoints and devices.",
+  WIRELESS_ACCESS_POINT: "Wireless network access device providing internal connectivity.",
+  FIREWALL: "Perimeter filtering and traffic control device between networks.",
+  DNS_SERVER: "Internal or business DNS infrastructure used for hostname resolution."
 };
 
 const ATTACK_DETAILS = {
@@ -80,6 +90,79 @@ const ATTACK_DETAILS = {
   "Admin DB Access": {
     desc: "Using full administrative rights to query or export the customer database.",
     rationale: "The final objective; difficulty is minimal once admin status is achieved."
+  },
+
+  "Wireless Network Compromise": {
+    desc: "Gaining access to the internal network by exploiting weak wireless security or credentials.",
+    rationale: "Wireless networks often expose internal access if not properly segmented or secured."
+  },
+  "Perimeter Device Exploit": {
+    desc: "Targeting firewall or edge devices through misconfigurations or known vulnerabilities.",
+    rationale: "Perimeter devices are high-value targets that can expose internal services if compromised."
+  },
+  "Local Network Access": {
+    desc: "Accessing internal systems after gaining presence on the local network.",
+    rationale: "Once inside the network, lateral movement becomes significantly easier."
+  },
+  "Internal Service Pivot": {
+    desc: "Using one compromised system to pivot into another internal service.",
+    rationale: "Internal trust relationships allow attackers to move deeper into the network."
+  },
+  "Mailbox / Server Abuse": {
+    desc: "Exploiting email server features or mailbox access to maintain persistence or spread attacks.",
+    rationale: "Email systems provide both communication control and data access."
+  },
+  "Domain Privilege Escalation": {
+    desc: "Escalating privileges within the domain to gain administrative control.",
+    rationale: "Domain escalation enables widespread access across systems and accounts."
+  },
+  "Internal Application Access": {
+    desc: "Accessing internal business applications after gaining initial system access.",
+    rationale: "Internal apps often trust authenticated users and lack strict defenses."
+  },
+  "HR System Access": {
+    desc: "Accessing a human resources system from a compromised internal workstation to view or interact with employee-related records.",
+    rationale: "Once an attacker has internal user-level access, HR platforms may be reachable through reused credentials, trusted sessions, or weak internal access controls."
+  },
+  "Finance System Access": {
+    desc: "Accessing a financial system from a compromised internal workstation to view or interact with accounting, payroll, or payment-related information.",
+    rationale: "Finance applications are often reachable from internal user systems and become attractive targets once an attacker gains a foothold inside the network."
+  },
+  "Backup System Access": {
+    desc: "Accessing backup systems to retrieve sensitive data or disable recovery capabilities.",
+    rationale: "Backups contain full data copies and are often less protected."
+  },
+  "Device Management Abuse": {
+    desc: "Abusing device management systems to control endpoints or deploy malicious configurations.",
+    rationale: "MDM systems have high privileges across managed devices."
+  },
+  "Network Discovery": {
+    desc: "Scanning and mapping internal systems using network services like DNS.",
+    rationale: "Understanding the network layout enables more targeted attacks."
+  },
+  "Malicious Email Delivery / Mail Rule Abuse": {
+    desc: "Using compromised email infrastructure to deliver malicious content or create hidden forwarding rules.",
+    rationale: "Email rules can persistently redirect or hide attacker activity."
+  },
+  "MDM Privilege Abuse": {
+    desc: "Using elevated MDM permissions to gain administrative-level control over devices.",
+    rationale: "MDM systems can enforce policies and execute actions across endpoints."
+  },
+  "Application Database Access": {
+    desc: "Accessing backend databases through compromised applications.",
+    rationale: "Applications often have direct connections to sensitive data stores."
+  },
+  "HR Data Access / Integration Abuse": {
+    desc: "Using the HR system itself, or its connected integrations, to retrieve sensitive employee or organizational data from the central data store.",
+    rationale: "Once an attacker reaches the HR platform, trusted integrations and backend connections can make sensitive records easier to reach than attacking the data store directly."
+  },
+  "Financial Data Access": {
+    desc: "Using a compromised finance platform to retrieve, export, or manipulate sensitive financial records stored in the organization’s central data systems.",
+    rationale: "Finance systems commonly have privileged access to highly valuable business data, making them effective stepping stones to the final target."
+  },
+  "Backup Data Exposure": {
+    desc: "Extracting sensitive data from backup systems.",
+    rationale: "Backups often contain unencrypted or complete datasets."
   }
 };
 
@@ -95,7 +178,19 @@ const MITIGATION_COLORS = {
   "Role-Based Access Control (RBAC) Enforcement": "peer-checked:bg-orange-800",
   "File Server Access Controls": "peer-checked:bg-purple-500",
   "Privileged Account Hardening": "peer-checked:bg-yellow-500",
-  "Network Segmentation": "peer-checked:bg-red-500"
+  "Network Segmentation": "peer-checked:bg-red-500",
+  "Wireless Security Hardening": "peer-checked:bg-sky-400",
+  "Perimeter Firewall Hardening": "peer-checked:bg-red-700",
+  "Internal Application Hardening": "peer-checked:bg-purple-500",
+  "Email Server Hardening": "peer-checked:bg-teal-500",
+  "Email Security Filtering": "peer-checked:bg-cyan-300",
+  "Domain Controller Hardening": "peer-checked:bg-yellow-600",
+  "HR System Access Controls": "peer-checked:bg-pink-500",
+  "Finance System Access Controls": "peer-checked:bg-amber-600",
+  "Backup Server Protection": "peer-checked:bg-indigo-700",
+  "MDM Security Controls": "peer-checked:bg-fuchsia-500",
+  "DNS Security Monitoring": "peer-checked:bg-green-500",
+  "DNS Access Restrictions": "peer-checked:bg-emerald-700"
 };
 
 // --- UTILITY FUNCTIONS ---
@@ -353,7 +448,7 @@ export function showDetailCard(data, type) {
           <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
           <p class="text-sm text-slate-300 leading-relaxed">${details.desc}</p>
         </section>
-        <div class="pt-10 space-y-3 border-t border-slate-700/30">
+        <div class="pt-5 space-y-3 border-t border-slate-700/30">
           <div class="p-3 bg-slate-900/60 rounded border border-slate-700/50">
             <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Base Cost</label>
             <span class="text-white font-mono font-bold text-lg">${data.weight}</span>
@@ -420,12 +515,22 @@ export function clearPath() {
 
 export function resetProfileForm() {
   const fields = [
-    "usesVPN",
-    "hasFileServer",
-    "usesSaaS",
-    "hasPublicWebApp",
-    "usesIdentityProvider"
-  ];
+  "usesVPN",
+  "hasFileServer",
+  "usesSaaS",
+  "hasPublicWebApp",
+  "usesIdentityProvider",
+  "hasEmailServer",
+  "hasDomainController",
+  "hasInternalApp",
+  "hasHRSystem",
+  "hasFinanceSystem",
+  "hasBackupServer",
+  "hasMDMServer",
+  "hasWirelessAccessPoint",
+  "hasFirewall",
+  "hasDNSServer"
+];
 
   fields.forEach((id) => {
     const checkbox = document.getElementById(id);
@@ -434,17 +539,28 @@ export function resetProfileForm() {
 }
 
 function fillProfileForm(profile) {
-  const usesVPN = document.getElementById("usesVPN");
-  const hasFileServer = document.getElementById("hasFileServer");
-  const usesSaaS = document.getElementById("usesSaaS");
-  const hasPublicWebApp = document.getElementById("hasPublicWebApp");
-  const usesIdentityProvider = document.getElementById("usesIdentityProvider");
+  const fields = [
+    "usesVPN",
+    "hasFileServer",
+    "usesSaaS",
+    "hasPublicWebApp",
+    "usesIdentityProvider",
+    "hasEmailServer",
+    "hasDomainController",
+    "hasInternalApp",
+    "hasHRSystem",
+    "hasFinanceSystem",
+    "hasBackupServer",
+    "hasMDMServer",
+    "hasWirelessAccessPoint",
+    "hasFirewall",
+    "hasDNSServer"
+  ];
 
-  if (usesVPN) usesVPN.checked = !!profile.usesVPN;
-  if (hasFileServer) hasFileServer.checked = !!profile.hasFileServer;
-  if (usesSaaS) usesSaaS.checked = !!profile.usesSaaS;
-  if (hasPublicWebApp) hasPublicWebApp.checked = !!profile.hasPublicWebApp;
-  if (usesIdentityProvider) usesIdentityProvider.checked = !!profile.usesIdentityProvider;
+  fields.forEach((field) => {
+    const checkbox = document.getElementById(field);
+    if (checkbox) checkbox.checked = !!profile[field];
+  });
 }
 
 function renderProfileSummary(profile) {
@@ -453,32 +569,30 @@ function renderProfileSummary(profile) {
 
   const yesNo = (value) => value ? "Yes" : "No";
 
-  content.innerHTML = `
-    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-      <span class="text-slate-300">Uses VPN</span>
-      <span class="font-semibold text-white">${yesNo(profile.usesVPN)}</span>
-    </div>
+  const rows = [
+    ["Uses VPN", profile.usesVPN],
+    ["Has File Server", profile.hasFileServer],
+    ["Uses SaaS", profile.usesSaaS],
+    ["Has Public Web App", profile.hasPublicWebApp],
+    ["Uses Identity Provider", profile.usesIdentityProvider],
+    ["Has Email Server", profile.hasEmailServer],
+    ["Has Domain Controller", profile.hasDomainController],
+    ["Has Internal App", profile.hasInternalApp],
+    ["Has HR System", profile.hasHRSystem],
+    ["Has Finance System", profile.hasFinanceSystem],
+    ["Has Backup Server", profile.hasBackupServer],
+    ["Has MDM Server", profile.hasMDMServer],
+    ["Has Wireless Access Point", profile.hasWirelessAccessPoint],
+    ["Has Firewall", profile.hasFirewall],
+    ["Has DNS Server", profile.hasDNSServer]
+  ];
 
-    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-      <span class="text-slate-300">Has File Server</span>
-      <span class="font-semibold text-white">${yesNo(profile.hasFileServer)}</span>
+  content.innerHTML = rows.map(([label, value], index) => `
+    <div class="flex justify-between items-center ${index < rows.length - 1 ? "border-b border-slate-700/50 pb-2" : ""}">
+      <span class="text-slate-300">${label}</span>
+      <span class="font-semibold text-white">${yesNo(value)}</span>
     </div>
-
-    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-      <span class="text-slate-300">Uses SaaS</span>
-      <span class="font-semibold text-white">${yesNo(profile.usesSaaS)}</span>
-    </div>
-
-    <div class="flex justify-between items-center border-b border-slate-700/50 pb-2">
-      <span class="text-slate-300">Public Web App</span>
-      <span class="font-semibold text-white">${yesNo(profile.hasPublicWebApp)}</span>
-    </div>
-
-    <div class="flex justify-between items-center">
-      <span class="text-slate-300">Uses Identity Provider</span>
-      <span class="font-semibold text-white">${yesNo(profile.usesIdentityProvider)}</span>
-    </div>
-  `;
+  `).join("");
 }
 
 export async function openUserProfileModal() {
@@ -606,6 +720,16 @@ export async function renderGraph() {
         { selector: 'node[id = "FILE_SERVER"]', style: { "background-color": "#0f766e" } },
         { selector: 'node[id = "THIRD_PARTY_SAAS"]', style: { "background-color": "#4338ca" } },
         { selector: 'node[id = "CUSTOMER_DB"]', style: { "background-color": "#16a34a" } },
+        { selector: 'node[id = "FIREWALL"]', style: { "background-color": "#dc2626" } },
+        { selector: 'node[id = "WIRELESS_ACCESS_POINT"]', style: { "background-color": "#0ea5e9" } },
+        { selector: 'node[id = "EMAIL_SERVER"]', style: { "background-color": "#f97316" } },
+        { selector: 'node[id = "MDM_SERVER"]', style: { "background-color": "#14b8a6" } },
+        { selector: 'node[id = "DOMAIN_CONTROLLER"]', style: { "background-color": "#eab308" } },
+        { selector: 'node[id = "DNS_SERVER"]', style: { "background-color": "#22b2c5" } },
+        { selector: 'node[id = "BACKUP_SERVER"]', style: { "background-color": "#6366f1" } },
+        { selector: 'node[id = "INTERNAL_APP"]', style: { "background-color": "#a855f7" } },
+        { selector: 'node[id = "HR_SYSTEM"]', style: { "background-color": "#ec4899" } },
+        { selector: 'node[id = "FINANCE_SYSTEM"]', style: { "background-color": "#f59e0b" } },
         {
           selector: "edge",
           style: {
@@ -837,7 +961,17 @@ document.addEventListener("DOMContentLoaded", () => {
       hasFileServer: document.getElementById("hasFileServer").checked,
       usesSaaS: document.getElementById("usesSaaS").checked,
       hasPublicWebApp: document.getElementById("hasPublicWebApp").checked,
-      usesIdentityProvider: document.getElementById("usesIdentityProvider").checked
+      usesIdentityProvider: document.getElementById("usesIdentityProvider").checked,
+      hasEmailServer: document.getElementById("hasEmailServer").checked,
+      hasDomainController: document.getElementById("hasDomainController").checked,
+      hasInternalApp: document.getElementById("hasInternalApp").checked,
+      hasHRSystem: document.getElementById("hasHRSystem").checked,
+      hasFinanceSystem: document.getElementById("hasFinanceSystem").checked,
+      hasBackupServer: document.getElementById("hasBackupServer").checked,
+      hasMDMServer: document.getElementById("hasMDMServer").checked,
+      hasWirelessAccessPoint: document.getElementById("hasWirelessAccessPoint").checked,
+      hasFirewall: document.getElementById("hasFirewall").checked,
+      hasDNSServer: document.getElementById("hasDNSServer").checked
     };
 
     await fetch("/api/profile", {

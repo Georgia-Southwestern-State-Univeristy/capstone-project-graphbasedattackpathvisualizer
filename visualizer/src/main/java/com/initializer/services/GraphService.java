@@ -157,6 +157,46 @@ public DirectedWeightedMultigraph<Node, Edge> getFilteredGraph(
         removeNodeById(graph, "IDENTITY_PROVIDER");
     }
 
+    if (!profile.isHasEmailServer()) {
+        removeNodeById(graph, "EMAIL_SERVER");
+    }
+
+    if (!profile.isHasDomainController()) {
+        removeNodeById(graph, "DOMAIN_CONTROLLER");
+    }
+
+    if (!profile.isHasInternalApp()) {
+        removeNodeById(graph, "INTERNAL_APP");
+    }
+
+    if (!profile.isHasHRSystem()) {
+        removeNodeById(graph, "HR_SYSTEM");
+    }
+
+    if (!profile.isHasFinanceSystem()) {
+        removeNodeById(graph, "FINANCE_SYSTEM");
+    }
+
+    if (!profile.isHasBackupServer()) {
+        removeNodeById(graph, "BACKUP_SERVER");
+    }
+
+    if (!profile.isHasMDMServer()) {
+        removeNodeById(graph, "MDM_SERVER");
+    }
+
+    if (!profile.isHasWirelessAccessPoint()) {
+        removeNodeById(graph, "WIRELESS_ACCESS_POINT");
+    }
+
+    if (!profile.isHasFirewall()) {
+        removeNodeById(graph, "FIREWALL");
+    }
+
+    if (!profile.isHasDNSServer()) {
+        removeNodeById(graph, "DNS_SERVER");
+    }
+
     return graph;
 }
 

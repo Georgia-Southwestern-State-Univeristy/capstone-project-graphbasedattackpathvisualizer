@@ -164,6 +164,16 @@ public class VisualizerController {
             existingProfile.setUsesSaaS(profile.isUsesSaaS());
             existingProfile.setHasPublicWebApp(profile.isHasPublicWebApp());
             existingProfile.setUsesIdentityProvider(profile.isUsesIdentityProvider());
+            existingProfile.setHasEmailServer(profile.isHasEmailServer());
+            existingProfile.setHasDomainController(profile.isHasDomainController());
+            existingProfile.setHasInternalApp(profile.isHasInternalApp());
+            existingProfile.setHasHRSystem(profile.isHasHRSystem());
+            existingProfile.setHasFinanceSystem(profile.isHasFinanceSystem());
+            existingProfile.setHasBackupServer(profile.isHasBackupServer());
+            existingProfile.setHasMDMServer(profile.isHasMDMServer());
+            existingProfile.setHasWirelessAccessPoint(profile.isHasWirelessAccessPoint());
+            existingProfile.setHasFirewall(profile.isHasFirewall());
+            existingProfile.setHasDNSServer(profile.isHasDNSServer());
 
             savedProfile = businessProfileService.saveProfile(existingProfile);
 
@@ -178,7 +188,17 @@ public class VisualizerController {
                 savedProfile.isHasFileServer(),
                 savedProfile.isUsesSaaS(),
                 savedProfile.isHasPublicWebApp(),
-                savedProfile.isUsesIdentityProvider()
+                savedProfile.isUsesIdentityProvider(),
+                savedProfile.isHasEmailServer(),
+                savedProfile.isHasDomainController(),
+                savedProfile.isHasInternalApp(),
+                savedProfile.isHasHRSystem(),
+                savedProfile.isHasFinanceSystem(),
+                savedProfile.isHasBackupServer(),
+                savedProfile.isHasMDMServer(),
+                savedProfile.isHasWirelessAccessPoint(),
+                savedProfile.isHasFirewall(),
+                savedProfile.isHasDNSServer()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
@@ -207,7 +227,17 @@ public class VisualizerController {
                 profile.isHasFileServer(),
                 profile.isUsesSaaS(),
                 profile.isHasPublicWebApp(),
-                profile.isUsesIdentityProvider()
+                profile.isUsesIdentityProvider(),
+                profile.isHasEmailServer(),
+                profile.isHasDomainController(),
+                profile.isHasInternalApp(),
+                profile.isHasHRSystem(),
+                profile.isHasFinanceSystem(),
+                profile.isHasBackupServer(),
+                profile.isHasMDMServer(),
+                profile.isHasWirelessAccessPoint(),
+                profile.isHasFirewall(),
+                profile.isHasDNSServer()
         );
 
         return ResponseEntity.ok(dto);
