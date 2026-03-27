@@ -31,145 +31,151 @@
 </head>
 
 <body class="h-screen bg-slate-900 text-slate-200 overflow-hidden text-[11px]">
-  <div id="authOverlay" class="hidden fixed inset-0 z-[2000] bg-slate-950 flex items-center justify-center px-4">
-  <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 overflow-hidden">
-  <h2 class="text-2xl font-bold text-white text-center uppercase tracking-wider mb-2">
-    GBAV Access Portal
-  </h2>
+  <div id="authOverlay" class="hidden fixed inset-0 z-[2000] bg-slate-950 flex items-center justify-center px-4 py-6">
+    <div class="w-full max-w-md max-h-[90vh] flex flex-col bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-8 overflow-y-auto sidebar-scroll">
+        <div class="flex justify-center mb-4">
+          <img src="/logo.png" alt="GBAV Logo" class="h-16 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+        </div>
 
-  <p class="text-slate-400 text-sm text-center mb-6">
-    Sign in or create an account to access your attack path dashboard
-  </p>
+        <h2 class="text-2xl font-bold text-white text-center uppercase tracking-wider mb-2">
+          GBAV Access Portal
+        </h2>
 
-  <!-- Tabs -->
-  <div class="relative bg-slate-800 rounded-xl p-1 mb-6 flex">
-    <div
-      id="authTabSlider"
-      class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-emerald-600 transition-all duration-300 ease-in-out"
-    ></div>
+        <p class="text-slate-400 text-sm text-center mb-6">
+          Sign in or create an account to access your attack path dashboard
+        </p>
 
-    <button
-      type="button"
-      id="signInTab"
-      class="relative z-10 flex-1 py-2 text-sm font-semibold text-white transition"
-    >
-      Sign In
-    </button>
-
-    <button
-      type="button"
-      id="signUpTab"
-      class="relative z-10 flex-1 py-2 text-sm font-semibold text-slate-300 transition"
-    >
-      Sign Up
-    </button>
-  </div>
-
-  <!-- Sliding forms wrapper -->
-  <div class="overflow-hidden">
-    <div
-      id="authFormsTrack"
-      class="flex w-[200%] transition-transform duration-300 ease-in-out"
-      style="transform: translateX(0%);"
-    >
-      <!-- Sign In panel -->
-      <div class="w-1/2 pr-2">
-        <form id="signInForm" class="space-y-4" novalidate>
-          <div>
-            <label for="signInEmail" class="block text-sm font-medium mb-1 text-slate-300">
-              Email
-            </label>
-            <input
-              id="signInEmail"
-              type="email"
-              required
-              class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label for="signInPassword" class="block text-sm font-medium mb-1 text-slate-300">
-              Password
-            </label>
-            <input
-              id="signInPassword"
-              type="password"
-              required
-              class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <p id="signInError" class="hidden text-red-400 text-sm"></p>
+        <!-- Tabs -->
+        <div class="relative bg-slate-800 rounded-xl p-1 mb-6 flex">
+          <div
+            id="authTabSlider"
+            class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-emerald-600 transition-all duration-300 ease-in-out"
+          ></div>
 
           <button
-            type="submit"
-            id="signInSubmitBtn"
-            class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+            type="button"
+            id="signInTab"
+            class="relative z-10 flex-1 py-2 text-sm font-semibold text-white transition"
           >
             Sign In
           </button>
-        </form>
-      </div>
-
-      <!-- Sign Up panel -->
-      <div class="w-1/2 pl-2">
-        <form id="signUpForm" class="space-y-4" novalidate>
-          <div>
-            <label for="signUpEmail" class="block text-sm font-medium mb-1 text-slate-300">
-              Email
-            </label>
-            <input
-              id="signUpEmail"
-              type="email"
-              required
-              class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label for="signUpPassword" class="block text-sm font-medium mb-1 text-slate-300">
-              Password
-            </label>
-            <input
-              id="signUpPassword"
-              type="password"
-              required
-              class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label for="signUpConfirmPassword" class="block text-sm font-medium mb-1 text-slate-300">
-              Confirm Password
-            </label>
-            <input
-              id="signUpConfirmPassword"
-              type="password"
-              required
-              class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <p id="passwordRuleHint" class="text-xs text-slate-400">
-            Password must be at least 8 characters and include one special character.
-          </p>
-
-          <p id="signUpError" class="hidden text-red-400 text-sm"></p>
-          <p id="signUpSuccess" class="hidden text-emerald-400 text-sm"></p>
 
           <button
-            type="submit"
-            id="signUpSubmitBtn"
-            class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+            type="button"
+            id="signUpTab"
+            class="relative z-10 flex-1 py-2 text-sm font-semibold text-slate-300 transition"
           >
             Sign Up
           </button>
-        </form>
+        </div>
+
+        <!-- Sliding forms wrapper -->
+        <div class="overflow-hidden">
+          <div
+            id="authFormsTrack"
+            class="flex w-[200%] transition-transform duration-300 ease-in-out"
+            style="transform: translateX(0%);"
+          >
+            <!-- Sign In panel -->
+            <div class="w-1/2 pr-2">
+              <form id="signInForm" class="space-y-4" novalidate>
+                <div>
+                  <label for="signInEmail" class="block text-sm font-medium mb-1 text-slate-300">
+                    Email
+                  </label>
+                  <input
+                    id="signInEmail"
+                    type="email"
+                    required
+                    class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label for="signInPassword" class="block text-sm font-medium mb-1 text-slate-300">
+                    Password
+                  </label>
+                  <input
+                    id="signInPassword"
+                    type="password"
+                    required
+                    class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <p id="signInError" class="hidden text-red-400 text-sm"></p>
+
+                <button
+                  type="submit"
+                  id="signInSubmitBtn"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+                >
+                  Sign In
+                </button>
+              </form>
+            </div>
+
+            <!-- Sign Up panel -->
+            <div class="w-1/2 pl-2">
+              <form id="signUpForm" class="space-y-4" novalidate>
+                <div>
+                  <label for="signUpEmail" class="block text-sm font-medium mb-1 text-slate-300">
+                    Email
+                  </label>
+                  <input
+                    id="signUpEmail"
+                    type="email"
+                    required
+                    class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label for="signUpPassword" class="block text-sm font-medium mb-1 text-slate-300">
+                    Password
+                  </label>
+                  <input
+                    id="signUpPassword"
+                    type="password"
+                    required
+                    class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label for="signUpConfirmPassword" class="block text-sm font-medium mb-1 text-slate-300">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="signUpConfirmPassword"
+                    type="password"
+                    required
+                    class="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <p id="passwordRuleHint" class="text-xs text-slate-400">
+                  Password must be at least 8 characters and include one special character.
+                </p>
+
+                <p id="signUpError" class="hidden text-red-400 text-sm"></p>
+                <p id="signUpSuccess" class="hidden text-emerald-400 text-sm"></p>
+
+                <button
+                  type="submit"
+                  id="signUpSubmitBtn"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+                >
+                  Sign Up
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
-</div>
 
 <div id="appShell" class="hidden flex h-full">
 
@@ -197,7 +203,12 @@
 
     <div class="flex flex-col flex-1 min-w-0">
       <header class="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 shrink-0">
-        <h1 class="text-lg font-semibold text-white uppercase tracking-wider">Graph-Based Attack Visualizer</h1>
+        <div class="flex items-center gap-3">
+          <img src="/logo.png" alt="GBAV Logo" class="h-8 w-auto object-contain">
+          <h1 class="text-lg font-semibold text-white uppercase tracking-wider">
+            Graph-Based Attack Path Visualizer
+          </h1>
+        </div>
         
         <div class="flex items-center gap-4">
           <button id="helpBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600"> Help </button>
