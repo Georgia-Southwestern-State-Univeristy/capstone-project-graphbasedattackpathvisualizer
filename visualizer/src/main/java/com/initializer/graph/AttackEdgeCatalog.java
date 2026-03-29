@@ -39,6 +39,22 @@ public class AttackEdgeCatalog {
         ),
 
 
+        new AttackEdgeDefinition(
+            NodeType.ATTACKER,
+            NodeType.WIRELESS_ACCESS_POINT,
+            AttackType.WIRELESS_NETWORK_COMPROMISE,
+            "Wireless Network Compromise"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.ATTACKER,
+            NodeType.FIREWALL,
+            AttackType.PERIMETER_DEVICE_EXPLOIT,
+            "Perimeter Device Exploit"
+        ),
+
+
         // ------------------------------------------------ From company website / web app
 
 
@@ -58,6 +74,27 @@ public class AttackEdgeCatalog {
             NodeType.EMPLOYEE_WORKSTATION,
             AttackType.REMOTE_LOGIN,
             "Remote Login (RDP / SSH)"
+        ),
+
+
+        // ------------------------------------------------ From wireless access point
+
+
+        new AttackEdgeDefinition(
+            NodeType.WIRELESS_ACCESS_POINT,
+            NodeType.EMPLOYEE_WORKSTATION,
+            AttackType.LOCAL_NETWORK_ACCESS,
+            "Local Network Access"
+        ),
+
+
+        // ------------------------------------------------ From firewall
+
+        new AttackEdgeDefinition(
+            NodeType.FIREWALL,
+            NodeType.INTERNAL_APP,
+            AttackType.INTERNAL_SERVICE_PIVOT,
+            "Internal Service Pivot"
         ),
 
 
@@ -85,6 +122,14 @@ public class AttackEdgeCatalog {
             NodeType.THIRD_PARTY_SAAS,
             AttackType.OAUTH_TOKEN_THEFT,
             "OAuth Token Theft / SSO Abuse"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_EMAIL,
+            NodeType.EMAIL_SERVER,
+            AttackType.MAILBOX_SERVER_ABUSE,
+            "Mailbox / Server Abuse"
         ),
 
 
@@ -126,6 +171,101 @@ public class AttackEdgeCatalog {
         ),
 
 
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.DOMAIN_CONTROLLER,
+            AttackType.DOMAIN_PRIVILEGE_ESCALATION,
+            "Domain Privilege Escalation"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.INTERNAL_APP,
+            AttackType.INTERNAL_APPLICATION_ACCESS,
+            "Internal Application Access"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.HR_SYSTEM,
+            AttackType.HR_SYSTEM_ACCESS,
+            "HR System Access"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.FINANCE_SYSTEM,
+            AttackType.FINANCE_SYSTEM_ACCESS,
+            "Finance System Access"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.BACKUP_SERVER,
+            AttackType.BACKUP_SYSTEM_ACCESS,
+            "Backup System Access"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.MDM_SERVER,
+            AttackType.DEVICE_MANAGEMENT_ABUSE,
+            "Device Management Abuse"
+        ),
+
+
+        new AttackEdgeDefinition(
+            NodeType.EMPLOYEE_WORKSTATION,
+            NodeType.DNS_SERVER,
+            AttackType.NETWORK_DISCOVERY,
+            "Network Discovery"
+        ),
+
+
+        // ------------------------------------------------ From DNS Server
+
+        new AttackEdgeDefinition(
+        NodeType.DNS_SERVER,
+        NodeType.DOMAIN_CONTROLLER,
+        AttackType.INTERNAL_SERVICE_PIVOT,
+        "Internal Service Pivot"
+    ),
+
+        // ------------------------------------------------ From domain controller
+
+        new AttackEdgeDefinition(
+            NodeType.DOMAIN_CONTROLLER,
+            NodeType.ADMIN_ACCOUNT,
+            AttackType.DOMAIN_PRIVILEGE_ESCALATION,
+            "Domain Privilege Escalation"
+        ),
+
+
+        // ------------------------------------------------ From email server
+
+        new AttackEdgeDefinition(
+            NodeType.EMAIL_SERVER,
+            NodeType.EMPLOYEE_WORKSTATION,
+            AttackType.MALICIOUS_EMAIL_DELIVERY,
+            "Malicious Email Delivery / Mail Rule Abuse"
+        ),
+
+
+        // ------------------------------------------------ From MDM server
+
+        new AttackEdgeDefinition(
+            NodeType.MDM_SERVER,
+            NodeType.ADMIN_ACCOUNT,
+            AttackType.MDM_PRIVILEGE_ABUSE,
+            "MDM Privilege Abuse"
+        ),
+
+
         // ------------------------------------------------ From file server
 
 
@@ -145,6 +285,46 @@ public class AttackEdgeCatalog {
             NodeType.CUSTOMER_DB,
             AttackType.API_DATA_SYNC,
             "API Access / Data Sync"
+        ),
+
+
+        // ------------------------------------------------ From internal app
+
+        new AttackEdgeDefinition(
+            NodeType.INTERNAL_APP,
+            NodeType.CUSTOMER_DB,
+            AttackType.APPLICATION_DATABASE_ACCESS,
+            "Application Database Access"
+        ),
+
+
+        // ------------------------------------------------ From HR system
+
+        new AttackEdgeDefinition(
+            NodeType.HR_SYSTEM,
+            NodeType.CUSTOMER_DB,
+            AttackType.HR_DATA_ACCESS,
+            "HR Data Access / Integration Abuse"
+        ),
+
+
+        // ------------------------------------------------ From finance system
+
+        new AttackEdgeDefinition(
+            NodeType.FINANCE_SYSTEM,
+            NodeType.CUSTOMER_DB,
+            AttackType.FINANCIAL_DATA_ACCESS,
+            "Financial Data Access"
+        ),
+
+
+        // ------------------------------------------------ From backup server
+
+        new AttackEdgeDefinition(
+            NodeType.BACKUP_SERVER,
+            NodeType.CUSTOMER_DB,
+            AttackType.BACKUP_DATA_EXPOSURE,
+            "Backup Data Exposure"
         ),
 
 
