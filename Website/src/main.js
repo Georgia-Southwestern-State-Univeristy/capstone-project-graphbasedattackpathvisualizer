@@ -97,6 +97,33 @@ function showAppShell() {
 /* =========================
    APP BUTTONS
 ========================= */
+function setupHelpModal() {
+  const helpBtn = document.getElementById("helpBtn");
+  const helpModal = document.getElementById("helpModal");
+  const helpBackdrop = document.getElementById("helpBackdrop");
+  const closeHelpModal = document.getElementById("closeHelpModal");
+  const howToOk = document.getElementById("howToOk");
+  const dontShowAgain = document.getElementById("dontShowAgain");
+
+  function openHelpModal() {
+    console.log("Help clicked");
+    console.log("helpBtn:", helpBtn);
+    console.log("helpModal:", helpModal);
+    helpModal?.classList.remove("hidden");
+  }
+
+  function closeHelp() {
+    if (dontShowAgain?.checked) {
+      localStorage.setItem("hideHelpModal", "true");
+    }
+    helpModal?.classList.add("hidden");
+  }
+
+  helpBtn?.addEventListener("click", openHelpModal);
+  closeHelpModal?.addEventListener("click", closeHelp);
+  howToOk?.addEventListener("click", closeHelp);
+  helpBackdrop?.addEventListener("click", closeHelp);
+}
 
 function setupAppButtons() {
   document.getElementById("reloadBtn")
@@ -335,6 +362,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setupAppButtons();
   setupAuthForms();
+  setupHelpModal();
 
   const user = await fetchCurrentUser();
 
