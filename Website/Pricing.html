@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GBAV Pricing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-200">
+
+  <div class="min-h-screen flex flex-col">
+    
+    <!-- Header -->
+    <header class="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 shrink-0">
+      <div class="flex items-center gap-3">
+        <img src="/logo.png" alt="GBAV Logo" class="h-8 w-auto object-contain">
+        <h1 class="text-lg font-semibold text-white uppercase tracking-wider">
+          Graph-Based Attack Visualizer
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="/" class="bg-slate-700 hover:bg-slate-600 transition px-4 py-2 rounded-lg border border-slate-600 text-sm font-medium">
+          Back to App
+        </a>
+        <a href="#pricingCards" class="bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg text-sm font-semibold">
+          View Plans
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="px-6 py-16 border-b border-slate-800">
+      <div class="max-w-6xl mx-auto text-center">
+        <p class="text-emerald-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">
+          Pricing
+        </p>
+        <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-wider mb-4">
+          Simple Plans for Security Visibility
+        </h2>
+        <p class="max-w-2xl mx-auto text-slate-400 text-base md:text-lg leading-relaxed">
+          Choose the plan that fits your organization. Model your environment, simulate mitigations,
+          and visualize the most likely attack paths before attackers do.
+        </p>
+      </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <main id="pricingCards" class="px-6 py-14">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Starter -->
+        <div class="rounded-2xl border border-slate-700 bg-slate-800/70 shadow-2xl overflow-hidden flex flex-col">
+          <div class="p-6 border-b border-slate-700">
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.25em] mb-2">Starter</p>
+            <h3 class="text-2xl font-bold text-white mb-2">For Small Teams</h3>
+            <div class="flex items-end gap-2">
+              <span class="text-4xl font-black text-white">$19</span>
+              <span class="text-slate-400 mb-1">/month</span>
+            </div>
+            <p class="text-slate-400 text-sm mt-3">
+              Great for student demos, small businesses, and proof-of-concept use.
+            </p>
+          </div>
+
+          <div class="p-6 flex-1">
+            <ul class="space-y-3 text-sm text-slate-300">
+              <li>• 1 business environment</li>
+              <li>• Core attack path visualization</li>
+              <li>• Mitigation toggles</li>
+              <li>• Path difficulty scoring</li>
+              <li>• Basic inspector details</li>
+            </ul>
+          </div>
+
+          <div class="p-6 border-t border-slate-700">
+            <button class="w-full bg-slate-700 hover:bg-slate-600 transition px-4 py-3 rounded-lg font-semibold border border-slate-600">
+              Get Starter
+            </button>
+          </div>
+        </div>
+
+        <!-- Pro -->
+        <div class="rounded-2xl border border-emerald-500 bg-slate-800 shadow-2xl overflow-hidden flex flex-col relative">
+          <div class="absolute top-4 right-4 bg-emerald-500 text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+            Most Popular
+          </div>
+
+          <div class="p-6 border-b border-slate-700">
+            <p class="text-emerald-400 text-xs font-bold uppercase tracking-[0.25em] mb-2">Pro</p>
+            <h3 class="text-2xl font-bold text-white mb-2">For Growing Businesses</h3>
+            <div class="flex items-end gap-2">
+              <span class="text-4xl font-black text-white">$49</span>
+              <span class="text-slate-400 mb-1">/month</span>
+            </div>
+            <p class="text-slate-400 text-sm mt-3">
+              Best for organizations that want deeper visibility and better comparison testing.
+            </p>
+          </div>
+
+          <div class="p-6 flex-1">
+            <ul class="space-y-3 text-sm text-slate-300">
+              <li>• Up to 5 business environments</li>
+              <li>• Dynamic mitigation modeling</li>
+              <li>• Saved infrastructure configurations</li>
+              <li>• Enhanced inspector details</li>
+              <li>• Before/after path comparison</li>
+              <li>• Priority email support</li>
+            </ul>
+          </div>
+
+          <div class="p-6 border-t border-slate-700">
+            <button class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-3 rounded-lg font-semibold text-white">
+              Start Pro
+            </button>
+          </div>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="rounded-2xl border border-slate-700 bg-slate-800/70 shadow-2xl overflow-hidden flex flex-col">
+          <div class="p-6 border-b border-slate-700">
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.25em] mb-2">Enterprise</p>
+            <h3 class="text-2xl font-bold text-white mb-2">For Larger Organizations</h3>
+            <div class="flex items-end gap-2">
+              <span class="text-4xl font-black text-white">$99</span>
+              <span class="text-slate-400 mb-1">/month</span>
+            </div>
+            <p class="text-slate-400 text-sm mt-3">
+              Built for teams that need scale, collaboration, and advanced support.
+            </p>
+          </div>
+
+          <div class="p-6 flex-1">
+            <ul class="space-y-3 text-sm text-slate-300">
+              <li>• Unlimited environments</li>
+              <li>• Team collaboration</li>
+              <li>• Advanced path analysis</li>
+              <li>• Priority onboarding</li>
+              <li>• Dedicated support</li>
+              <li>• Custom deployment options</li>
+            </ul>
+          </div>
+
+          <div class="p-6 border-t border-slate-700">
+            <button class="w-full bg-slate-700 hover:bg-slate-600 transition px-4 py-3 rounded-lg font-semibold border border-slate-600">
+              Contact Sales
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Comparison Section -->
+    <section class="px-6 pb-14">
+      <div class="max-w-6xl mx-auto rounded-2xl border border-slate-700 bg-slate-800/60 overflow-hidden shadow-2xl">
+        <div class="px-6 py-4 border-b border-slate-700">
+          <h3 class="text-white text-lg font-semibold uppercase tracking-wider">
+            Plan Comparison
+          </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-900/60 text-slate-300 uppercase tracking-wider text-xs">
+              <tr>
+                <th class="text-left px-6 py-4">Feature</th>
+                <th class="text-left px-6 py-4">Starter</th>
+                <th class="text-left px-6 py-4">Pro</th>
+                <th class="text-left px-6 py-4">Enterprise</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-t border-slate-700">
+                <td class="px-6 py-4">Business environments</td>
+                <td class="px-6 py-4">1</td>
+                <td class="px-6 py-4">5</td>
+                <td class="px-6 py-4">Unlimited</td>
+              </tr>
+              <tr class="border-t border-slate-700">
+                <td class="px-6 py-4">Mitigation simulation</td>
+                <td class="px-6 py-4">Yes</td>
+                <td class="px-6 py-4">Yes</td>
+                <td class="px-6 py-4">Yes</td>
+              </tr>
+              <tr class="border-t border-slate-700">
+                <td class="px-6 py-4">Saved configurations</td>
+                <td class="px-6 py-4">Limited</td>
+                <td class="px-6 py-4">Full</td>
+                <td class="px-6 py-4">Full</td>
+              </tr>
+              <tr class="border-t border-slate-700">
+                <td class="px-6 py-4">Team access</td>
+                <td class="px-6 py-4">No</td>
+                <td class="px-6 py-4">Basic</td>
+                <td class="px-6 py-4">Advanced</td>
+              </tr>
+              <tr class="border-t border-slate-700">
+                <td class="px-6 py-4">Support</td>
+                <td class="px-6 py-4">Standard</td>
+                <td class="px-6 py-4">Priority</td>
+                <td class="px-6 py-4">Dedicated</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="px-6 pb-16">
+      <div class="max-w-4xl mx-auto rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-8 text-center shadow-[0_0_30px_rgba(16,185,129,0.12)]">
+        <p class="text-emerald-400 text-xs font-bold uppercase tracking-[0.25em] mb-3">
+          Get Started
+        </p>
+        <h3 class="text-3xl font-black text-white uppercase tracking-wider mb-4">
+          Start Mapping Your Attack Surface
+        </h3>
+        <p class="text-slate-300 max-w-2xl mx-auto mb-6">
+          Visualize the easiest attacker paths, test defenses, and better understand where your organization is most exposed.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button class="bg-emerald-600 hover:bg-emerald-700 transition px-6 py-3 rounded-lg font-semibold text-white w-full sm:w-auto">
+            Start Free Trial
+          </button>
+          <button class="bg-slate-700 hover:bg-slate-600 transition px-6 py-3 rounded-lg font-semibold border border-slate-600 w-full sm:w-auto">
+            Contact Sales
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
