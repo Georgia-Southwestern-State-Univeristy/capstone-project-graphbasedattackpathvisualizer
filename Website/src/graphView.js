@@ -5,6 +5,10 @@ cytoscape.use(fcose);
 
 let cy = null;
 
+let lastPathSignature = null;
+let lastAiAnalysisSignature = null;
+let lastAiAnalysisData = null;
+
 // --- CONFIGURATION & DATA MAPS ---
 
 const NODE_DESCRIPTIONS = {
@@ -265,6 +269,108 @@ async function fetchAttackPath(source, target) {
   return data;
 }
 
+async function fetchAiSummary(source, target) {
+
+  const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
+  const ids = Array.from(checkedBoxes).map(cb => cb.dataset.id);
+
+  const res = await fetch("/api/ai/attack-summary", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      source,
+      target,
+      mitigations: ids
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "AI summary failed");
+  }
+
+  return data;
+}
+
+function renderAiModal(data) {
+  const modal = document.getElementById("aiModal");
+
+  const summary = document.getElementById("aiSummary");
+  const risk = document.getElementById("aiRiskLevel");
+  const mitigations = document.getElementById("aiMitigations");
+
+  const topRecommendation = document.getElementById("aiTopRecommendation");
+  const weakest = document.getElementById("aiWeakestPoint");
+  const impact = document.getElementById("aiBusinessImpact");
+  const mitigationDetails = document.getElementById("aiMitigationDetails");
+
+  if (!modal || !data) return;
+
+  // --- Basic fields ---
+  summary.textContent = data.summary || "";
+  topRecommendation.textContent = data.topRecommendation || "";
+  weakest.textContent = data.weakestPoint || "";
+  impact.textContent = data.businessImpact || "";
+
+  // --- Risk color logic ---
+  const riskLevel = (data.riskLevel || "").toUpperCase();
+  risk.textContent = riskLevel;
+
+  risk.classList.remove("text-rose-400", "text-yellow-400", "text-emerald-400");
+
+  if (riskLevel === "HIGH") {
+    risk.classList.add("text-rose-400");
+  } else if (riskLevel === "MEDIUM") {
+    risk.classList.add("text-yellow-400");
+  } else if (riskLevel === "LOW") {
+    risk.classList.add("text-emerald-400");
+  }
+
+  // --- Simple mitigation list ---
+  mitigations.innerHTML = "";
+  (data.recommendedMitigations || []).forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    mitigations.appendChild(li);
+  });
+
+  // --- Mitigation details ---
+  mitigationDetails.innerHTML = "";
+
+  (data.mitigationDetails || []).forEach(mit => {
+    const div = document.createElement("div");
+    div.className = "p-2 rounded bg-slate-800 border border-slate-700";
+
+    let priorityClass = "";
+
+    if (mit.priority === "PRIMARY") {
+      priorityClass = "bg-red-500/20 text-red-400";
+    } else if (mit.priority === "SECONDARY") {
+      priorityClass = "bg-yellow-500/20 text-yellow-400";
+    } else {
+      priorityClass = "bg-emerald-500/20 text-emerald-400";
+    }
+
+    div.innerHTML = `
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-semibold text-white">${mit.name}</span>
+        <span class="text-[10px] px-2 py-0.5 rounded ${priorityClass}">
+          ${mit.priority}
+        </span>
+      </div>
+      <p class="text-slate-300 text-[11px]">${mit.reason}</p>
+    `;
+
+    mitigationDetails.appendChild(div);
+  });
+
+  modal.classList.remove("hidden");
+}
+
 async function fetchMitigations() {
   const res = await fetch("/api/mitigations", {
     credentials: "include"
@@ -328,6 +434,33 @@ async function renderMitigations() {
     `;
 
     container.appendChild(wrapper);
+  });
+}
+
+function setupMitigationListeners() {
+  const checkboxes = document.querySelectorAll(".mitigation-checkbox");
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", () => {
+
+      // Hide AI modal
+      const aiModal = document.getElementById("aiModal");
+      if (aiModal) {
+        aiModal.classList.add("hidden");
+        aiModal.style.left = "";
+        aiModal.style.top = "";
+        aiModal.style.right = "1.5rem";
+      }
+
+      // Hide AI button
+      const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
+      if (aiAnalysisBtn) aiAnalysisBtn.classList.add("hidden");
+
+      // Clear AI cache
+      lastPathSignature = null;
+      lastAiAnalysisSignature = null;
+      lastAiAnalysisData = null;
+    });
   });
 }
 
@@ -471,14 +604,50 @@ export function hideDetailCard() {
 
 // --- LOGIC EXPORTS ---
 
+function buildPathSignature(pathResp) {
+  if (!pathResp) return null;
+
+  const nodeIds = (pathResp.nodes || []).map(n => n.id).join("->");
+
+  const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
+  const mitigationIds = Array.from(checkedBoxes)
+    .map(cb => cb.dataset.id)
+    .sort()
+    .join(",");
+
+  return `${nodeIds}|cost:${pathResp.totalCost}|mits:${mitigationIds}`;
+}
+
 export async function computeAndShowPath() {
   const status = document.getElementById("status");
   const pathResult = document.getElementById("pathResult");
   const costValue = document.getElementById("totalCostValue");
+  const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
+
+  const aiModal = document.getElementById("aiModal");
+
+  if (aiModal) {
+    aiModal.classList.add("hidden");
+    aiModal.style.left = "";
+    aiModal.style.top = "";
+    aiModal.style.right = "1.5rem";
+  }
+
   try {
     status.textContent = "Computing...";
     const pathResp = await fetchAttackPath("ATTACKER", "CUSTOMER_DB");
+
+    const currentSignature = buildPathSignature(pathResp);
+
+    if (lastPathSignature !== currentSignature) {
+      lastAiAnalysisSignature = null;
+      lastAiAnalysisData = null;
+    }
+
+    lastPathSignature = currentSignature;
+
     await animateAttackPath(pathResp);
+    
     status.textContent = "Path Found";
     status.className = "font-mono text-rose-500 uppercase tracking-widest animate-pulse font-bold drop-shadow-[0_0_10px_rgba(244,63,94,0.7)]";
     if (pathResult && costValue) {
@@ -486,8 +655,60 @@ export async function computeAndShowPath() {
       const targetCost = Number(pathResp.totalCost) || 0;
       animateValue(costValue, 0, targetCost, 600);
     }
+
+    if (aiAnalysisBtn) {
+      aiAnalysisBtn.classList.remove("hidden");
+    }
+
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
+  }
+}
+
+export async function runAiAnalysis() {
+  const status = document.getElementById("status");
+  const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
+
+  if (!lastPathSignature) return;
+
+  if (lastAiAnalysisSignature === lastPathSignature && lastAiAnalysisData) {
+    renderAiModal(lastAiAnalysisData);
+    return;
+  }
+
+  try {
+    if (status) {
+      status.textContent = "Analyzing...";
+      status.className = "font-mono text-slate-300 uppercase tracking-widest";
+    }
+
+    if (aiAnalysisBtn) {
+      aiAnalysisBtn.disabled = true;
+      aiAnalysisBtn.textContent = "Loading...";
+    }
+
+    const aiData = await fetchAiSummary("ATTACKER", "CUSTOMER_DB");
+
+    lastAiAnalysisSignature = lastPathSignature;
+    lastAiAnalysisData = aiData;
+
+    renderAiModal(aiData);
+
+    if (status) {
+      status.textContent = "AI Ready";
+      status.className = "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+    }
+  } catch (err) {
+    console.error("AI summary failed:", err);
+    if (status) {
+      status.textContent = "AI Error";
+      status.className = "font-mono text-rose-500 uppercase tracking-widest";
+    }
+  } finally {
+    if (aiAnalysisBtn) {
+      aiAnalysisBtn.disabled = false;
+      aiAnalysisBtn.textContent = "AI Analysis";
+    }
   }
 }
 
@@ -511,6 +732,21 @@ export function clearPath() {
     status.className =
       "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
   }
+
+  const aiModal = document.getElementById("aiModal");
+  if (aiModal) {
+    aiModal.classList.add("hidden");
+    aiModal.style.left = "";
+    aiModal.style.top = "";
+    aiModal.style.right = "1.5rem";
+  }
+
+  const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
+  if (aiAnalysisBtn) aiAnalysisBtn.classList.add("hidden");
+
+  lastPathSignature = null;
+  lastAiAnalysisSignature = null;
+  lastAiAnalysisData = null;
 }
 
 export function resetProfileForm() {
@@ -908,6 +1144,7 @@ export async function renderGraph() {
   }).run();
 
   await renderMitigations();
+  setupMitigationListeners();
 
   setTimeout(() => {
     if (cy) {
@@ -928,6 +1165,58 @@ if (container) {
   new ResizeObserver(() => {
     if (cy) { cy.resize(); cy.fit(undefined, 20); }
   }).observe(container);
+}
+
+function setupAiModal() {
+  const modal = document.getElementById("aiModal");
+  const header = document.getElementById("aiModalHeader");
+  const closeBtn = document.getElementById("closeAiModal");
+
+  if (!modal || !header) return;
+
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  header.addEventListener("mousedown", (e) => {
+    isDragging = true;
+
+    const rect = modal.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    modal.style.left = `${rect.left}px`;
+    modal.style.top = `${rect.top}px`;
+    modal.style.right = "auto";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    const modalRect = modal.getBoundingClientRect();
+    const modalWidth = modalRect.width;
+    const modalHeight = modalRect.height;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let newLeft = e.clientX - offsetX;
+    let newTop = e.clientY - offsetY;
+
+    newLeft = Math.max(0, Math.min(newLeft, viewportWidth - modalWidth));
+    newTop = Math.max(0, Math.min(newTop, viewportHeight - modalHeight));
+
+    modal.style.left = `${newLeft}px`;
+    modal.style.top = `${newTop}px`;
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+
+  closeBtn?.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -985,5 +1274,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     await renderGraph();
   });
+  setupAiModal();
 });
 

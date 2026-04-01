@@ -22,4 +22,26 @@ public class BusinessProfileService {
     public BusinessProfileEntity getProfileByUser(UserEntity user) {
         return businessProfileRepository.findByUser(user);
     }
+
+    // Converts a BusinessProfileEntity into a BusinessProfileDTO
+    public BusinessProfileDTO toDTO(BusinessProfileEntity profile) {
+        return new BusinessProfileDTO(
+                profile.getProfileID(),
+                profile.isUsesVPN(),
+                profile.isHasFileServer(),
+                profile.isUsesSaaS(),
+                profile.isHasPublicWebApp(),
+                profile.isUsesIdentityProvider(),
+                profile.isHasEmailServer(),
+                profile.isHasDomainController(),
+                profile.isHasInternalApp(),
+                profile.isHasHRSystem(),
+                profile.isHasFinanceSystem(),
+                profile.isHasBackupServer(),
+                profile.isHasMDMServer(),
+                profile.isHasWirelessAccessPoint(),
+                profile.isHasFirewall(),
+                profile.isHasDNSServer()
+        );
+    }
 }

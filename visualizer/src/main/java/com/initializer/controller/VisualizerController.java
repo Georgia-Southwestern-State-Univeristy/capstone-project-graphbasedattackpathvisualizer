@@ -23,6 +23,11 @@ import com.initializer.entity.UserEntity;
 import com.initializer.services.BusinessProfileService;
 import com.initializer.services.UserService;
 import com.initializer.services.BusinessProfileDTO;
+import com.initializer.services.AttackPathSummaryBuilderService;
+import com.initializer.services.AttackPathSummaryRequest;
+import com.initializer.services.AttackPathSummaryResponse;
+import com.initializer.services.AiAnalysisService;
+import com.initializer.services.GenerateAttackSummaryRequest;
 
 // REST controller for exposing attack graph structure.
 
@@ -44,6 +49,12 @@ public class VisualizerController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AttackPathSummaryBuilderService attackPathSummaryBuilderService;
+
+    @Autowired
+    private AiAnalysisService aiAnalysisService;
     
     // Health check endpoint.
     
@@ -241,5 +252,30 @@ public class VisualizerController {
         );
 
         return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/ai/attack-summary")
+    public ResponseEntity<AttackPathSummaryResponse> generateAttackSummary(
+            @RequestBody GenerateAttackSummaryRequest request,
+            Authentication authentication) {
+
+        UserEntity user = userService.getUserByEmail(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        AttackPathSummaryRequest summaryRequest =
+                attackPathSummaryBuilderService.buildSummaryRequest(
+                        user,
+                        request.getSource(),
+                        request.getTarget(),
+                        request.getMitigations()
+                );
+
+        AttackPathSummaryResponse aiResponse =
+                aiAnalysisService.generateAttackPathSummary(summaryRequest);
+
+        return ResponseEntity.ok(aiResponse);
     }
 }
