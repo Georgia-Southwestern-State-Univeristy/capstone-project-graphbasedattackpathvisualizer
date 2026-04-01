@@ -1,6 +1,5 @@
 import "./style.css";
-import { renderGraph, computeAndShowPath, clearPath, initializeApp, resetProfileForm } from "./graphView.js";
-/* =========================
+import { renderGraph, computeAndShowPath, runAiAnalysis, clearPath, initializeApp, resetProfileForm } from "./graphView.js";/* =========================
    AUTH FUNCTIONS
 ========================= */
 
@@ -101,9 +100,7 @@ function setupHelpModal() {
   const helpBtn = document.getElementById("helpBtn");
   const helpModal = document.getElementById("helpModal");
   const helpBackdrop = document.getElementById("helpBackdrop");
-  const closeHelpModal = document.getElementById("closeHelpModal");
   const howToOk = document.getElementById("howToOk");
-  const dontShowAgain = document.getElementById("dontShowAgain");
 
   function openHelpModal() {
     console.log("Help clicked");
@@ -113,14 +110,10 @@ function setupHelpModal() {
   }
 
   function closeHelp() {
-    if (dontShowAgain?.checked) {
-      localStorage.setItem("hideHelpModal", "true");
-    }
     helpModal?.classList.add("hidden");
   }
 
   helpBtn?.addEventListener("click", openHelpModal);
-  closeHelpModal?.addEventListener("click", closeHelp);
   howToOk?.addEventListener("click", closeHelp);
   helpBackdrop?.addEventListener("click", closeHelp);
 }
@@ -134,6 +127,9 @@ function setupAppButtons() {
 
   document.getElementById("clearPathBtn")
     ?.addEventListener("click", () => clearPath());
+
+  document.getElementById("aiAnalysisBtn")
+    ?.addEventListener("click", () => runAiAnalysis());
 
     document.getElementById("logoutFromProfileBtn")
     ?.addEventListener("click", async () => {

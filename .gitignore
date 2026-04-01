@@ -33,7 +33,14 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 
-
+###############################
 # IDE
+###############################
 .idea/
 .vscode/
+
+################################
+# Local secrets (DO NOT COMMIT)
+################################
+visualizer/src/main/resources/application-local.properties
+

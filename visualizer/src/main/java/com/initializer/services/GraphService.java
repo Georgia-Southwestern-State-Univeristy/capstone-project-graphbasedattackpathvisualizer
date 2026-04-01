@@ -250,4 +250,41 @@ public List<MitigationDTO> getMitigations(BusinessProfileEntity profile) {
             ))
             .toList();
 }
+
+public List<String> getRecommendedMitigationsForStep(
+        String sourceNodeId,
+        String targetNodeId,
+        String attackAction,
+        List<Integer> enabledMitigationIds) {
+
+    List<String> recommendedMitigations = new ArrayList<>();
+
+    for (EdgeEntity edgeEntity : edgeRepository.findAll()) {
+
+        boolean matchesStep =
+                edgeEntity.getSourceNode().getNodeType().equals(sourceNodeId) &&
+                edgeEntity.getTargetNode().getNodeType().equals(targetNodeId) &&
+                edgeEntity.getAttackAction().equalsIgnoreCase(attackAction);
+
+        if (matchesStep) {
+
+            edgeEntity.getMitigationEffects().forEach(effect -> {
+                Integer mitigationId = effect.getMitigation().getMitID();
+
+                boolean alreadyEnabled =
+                        enabledMitigationIds != null &&
+                        enabledMitigationIds.contains(mitigationId);
+
+                if (!alreadyEnabled) {
+                    recommendedMitigations.add(effect.getMitigation().getMitName());
+                }
+            });
+
+            break;
+        }
+    }
+
+    return recommendedMitigations;
+}
+
 }
