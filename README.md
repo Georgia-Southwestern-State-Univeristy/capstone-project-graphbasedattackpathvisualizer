@@ -47,6 +47,7 @@ This enables:
 - **Algorithm:** Dijkstra's Shortest Path
 - **Database:** PostgreSQL  
 - **ORM:** Spring Data JPA / Hibernate
+- **AI Integration:** OpenAI API
 - **Frontend Framework:** Vite
 - **Styling:** Tailwind CSS
 - **Graph Visualization:** Cytoscape.js
@@ -111,7 +112,19 @@ Ensure the following properties are configured correctly:
 
 Replace YOUR_USERNAME and YOUR_PASSWORD with your PostgreSQL credentials
 
-### 4. First-Time Database Seeding
+### 4. OpenAI Configuration
+
+Create or update:
+
+`application-local.properties`
+
+Add:
+
+`openai.api.key=YOUR_API_KEY`
+
+This file should NOT be committed to version control.
+
+### 5. First-Time Database Seeding
 
 If running the project for the first time or after dropping the database:
 
@@ -171,11 +184,14 @@ After successful startup, change it back to:
 - `GET /api/graph`  
     Returns the attack graph filtered by the authenticated user's BusinessProfile
 
-- `GET /api/path?source={sourceId}&target={targetId}`  
-    Computes and returns the shortest attack path for the authenticated user
+- `GET /api/path?source={sourceId}&target={targetId}&mitigations={ids}`  
+    Computes and returns the shortest attack path for the authenticated user, optionally applying selected mitigations
 
 - `GET /api/mitigations`  
     Returns all available mitigation controls for the authenticated user's graph
+
+- `POST /api/ai/attack-summary`  
+    Generates an AI-based summary of the computed attack path, including risk analysis, weakest points, and mitigation recommendations
 
 ---
 
@@ -225,6 +241,18 @@ After successful startup, change it back to:
 
 9. Recompute the attack path to observe how security controls impact attack feasibility.
 
+10. View the AI-generated attack path summary to understand key risks, weak points, and recommended mitigations based on your configuration.
+
+## AI Attack Path Summary
+
+After computing an attack path, the system can generate an AI-powered summary that:
+
+- Explains the attack path step-by-step
+- Identifies the weakest points in the system
+- Highlights overall risk level
+- Suggests relevant mitigations
+
+This feature is designed to improve usability for non-technical users by translating graph-based results into clear, actionable insights.
 
 ## Contributor Guidelines
 
