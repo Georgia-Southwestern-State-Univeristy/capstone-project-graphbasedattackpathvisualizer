@@ -4,7 +4,7 @@ import fcose from "cytoscape-fcose";
 cytoscape.use(fcose);
 
 let cy = null;
-
+let mitigationHighlightTimeout = null;
 let lastPathSignature = null;
 let lastAiAnalysisSignature = null;
 let lastAiAnalysisData = null;
@@ -196,7 +196,112 @@ const MITIGATION_COLORS = {
   "DNS Security Monitoring": "peer-checked:bg-green-500",
   "DNS Access Restrictions": "peer-checked:bg-emerald-700"
 };
-
+const MITIGATION_EDGE_MAP = {
+  "Email MFA": [
+    "Phishing / Credential Theft",
+    "Password Reset / SSO Abuse",
+    "OAuth Token Theft / SSO Abuse"
+  ],
+  "Web App Hardening": [
+    "Exploit Web App / Weak Login",
+    "Application Database Access"
+  ],
+  "VPN / Remote Access MFA": [
+    "Stolen VPN Credentials"
+  ],
+  "Endpoint Detection & Response": [
+    "Malware Delivery",
+    "Privilege Escalation / Credential Dumping"
+  ],
+  "Remote Access Hardening": [
+    "Remote Login (RDP / SSH)"
+  ],
+  "Conditional Access": [
+    "Password Reset / SSO Abuse",
+    "OAuth Token Theft / SSO Abuse",
+    "Credential Reuse"
+  ],
+  "Identity Provider Hardening": [
+    "Password Reset / SSO Abuse",
+    "OAuth Token Theft / SSO Abuse",
+    "Over-Privileged Role Assignment"
+  ],
+  "SaaS Application Security Controls": [
+    "API Access / Data Sync",
+    "OAuth Token Theft / SSO Abuse"
+  ],
+  "Role-Based Access Control (RBAC) Enforcement": [
+    "Over-Privileged Role Assignment",
+    "Admin DB Access",
+    "HR Data Access / Integration Abuse",
+    "Financial Data Access"
+  ],
+  "File Server Access Controls": [
+    "Access Shared Drive",
+    "Stored Credentials / Config Leak"
+  ],
+  "Privileged Account Hardening": [
+    "Privilege Escalation / Credential Dumping",
+    "Domain Privilege Escalation",
+    "MDM Privilege Abuse",
+    "Admin DB Access"
+  ],
+  "Network Segmentation": [
+    "Direct Network Access",
+    "Local Network Access",
+    "Internal Service Pivot",
+    "Internal Application Access",
+    "HR System Access",
+    "Finance System Access",
+    "Backup System Access",
+    "Application Database Access"
+  ],
+  "Wireless Security Hardening": [
+    "Wireless Network Compromise"
+  ],
+  "Perimeter Firewall Hardening": [
+    "Perimeter Device Exploit"
+  ],
+  "Internal Application Hardening": [
+    "Internal Application Access",
+    "Application Database Access"
+  ],
+  "Email Server Hardening": [
+    "Mailbox / Server Abuse",
+    "Malicious Email Delivery / Mail Rule Abuse"
+  ],
+  "Email Security Filtering": [
+    "Phishing / Credential Theft",
+    "Malware Delivery",
+    "Malicious Email Delivery / Mail Rule Abuse"
+  ],
+  "Domain Controller Hardening": [
+    "Domain Privilege Escalation",
+    "Credential Reuse"
+  ],
+  "HR System Access Controls": [
+    "HR System Access",
+    "HR Data Access / Integration Abuse"
+  ],
+  "Finance System Access Controls": [
+    "Finance System Access",
+    "Financial Data Access"
+  ],
+  "Backup Server Protection": [
+    "Backup System Access",
+    "Backup Data Exposure"
+  ],
+  "MDM Security Controls": [
+    "Device Management Abuse",
+    "MDM Privilege Abuse"
+  ],
+  "DNS Security Monitoring": [
+    "Network Discovery"
+  ],
+  "DNS Access Restrictions": [
+    "Network Discovery"
+  ]
+};
 // --- UTILITY FUNCTIONS ---
 
 const tooltip = document.getElementById("edgeTooltip");
@@ -208,16 +313,20 @@ function toCytoscapeElements(apiGraph) {
 
   const edges = (apiGraph.edges ?? []).map((e) => {
     const rawAction = e.attackAction ?? "";
+    const rawAttackType = e.attackType ?? "";
+
     return {
       data: {
-        id: `${e.source}__${e.target}__${rawAction}`,
+        id: `${e.source}__${e.target}__${rawAttackType}`,
         source: e.source,
         target: e.target,
+        attackType: rawAttackType,
         attackAction: rawAction,
         weight: Number(e.weight ?? 1),
       },
     };
   });
+
   return [...nodes, ...edges];
 }
 
@@ -402,7 +511,47 @@ async function fetchCurrentUserInfo() {
 
   return res.json();
 }
+function updateMitigationHighlights({ autoClear = true } = {}) {
+  if (!cy) return;
 
+  if (mitigationHighlightTimeout) {
+    clearTimeout(mitigationHighlightTimeout);
+    mitigationHighlightTimeout = null;
+  }
+
+  cy.edges().removeClass("mitigationHighlight");
+  cy.nodes().removeClass("mitigationNodeHighlight");
+
+  const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
+  const selectedMitigationNames = Array.from(checkedBoxes).map(cb => cb.dataset.name);
+
+  const highlightedActions = new Set();
+
+  selectedMitigationNames.forEach(name => {
+    const actions = MITIGATION_EDGE_MAP[name] || [];
+    actions.forEach(action => highlightedActions.add(action));
+  });
+
+  cy.edges().forEach(edge => {
+    const action = edge.data("attackAction");
+
+    if (highlightedActions.has(action)) {
+      edge.addClass("mitigationHighlight");
+      edge.source().addClass("mitigationNodeHighlight");
+      edge.target().addClass("mitigationNodeHighlight");
+    }
+  });
+
+  if (autoClear) {
+    mitigationHighlightTimeout = setTimeout(() => {
+      if (!cy) return;
+
+      cy.edges().removeClass("mitigationHighlight");
+      cy.nodes().removeClass("mitigationNodeHighlight");
+      mitigationHighlightTimeout = null;
+    }, 2500);
+  }
+}
 async function renderMitigations() {
   const container = document.getElementById("mitigationContainer");
   if (!container) return;
@@ -424,9 +573,10 @@ async function renderMitigations() {
           ${mit.name}
         </span>
         <div class="relative">
-          <input type="checkbox"
-                 class="sr-only peer mitigation-checkbox"
-                 data-id="${mit.id}">
+         <input type="checkbox"
+       class="sr-only peer mitigation-checkbox"
+       data-id="${mit.id}"
+       data-name="${mit.name}">
           <div class="w-12 h-6 bg-slate-600 rounded-full ${colorClass} transition-all duration-300 shadow-inner"></div>
           <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>
         </div>
@@ -434,6 +584,10 @@ async function renderMitigations() {
     `;
 
     container.appendChild(wrapper);
+    const checkbox = wrapper.querySelector(".mitigation-checkbox");
+checkbox?.addEventListener("change", () => {
+  updateMitigationHighlights();
+});
   });
 }
 
@@ -720,6 +874,11 @@ export function clearPath() {
   const switches = document.querySelectorAll(".mitigation-checkbox");
   switches.forEach(sw => sw.checked = false);
 
+  if (cy) {
+  cy.edges().removeClass("mitigationHighlight");
+  cy.nodes().removeClass("mitigationNodeHighlight");
+}
+
   const pathResult = document.getElementById("pathResult");
   const status = document.getElementById("status");
   const costValue = document.getElementById("totalCostValue");
@@ -982,6 +1141,37 @@ export async function renderGraph() {
             "transition-duration": "0.2s"
           }
         },
+        
+{
+  selector: "edge.mitigationHighlight",
+  style: {
+    width: 5,
+    "line-color": "#22c55e",
+    "target-arrow-color": "#22c55e",
+    "transition-property": "line-color, width",
+    "transition-duration": "0.4s"
+  }
+},
+{
+  selector: "node.mitigationNodeHighlight",
+  style: {
+    "border-width": 4,
+    "border-color": "#22c55e",
+    "shadow-blur": 10,
+    "shadow-color": "#22c55e",
+    "shadow-opacity": 0.5
+  }
+},
+{
+  selector: "edge.pathEdge.mitigationHighlight",
+  style: {
+    width: 7,
+    "line-color": "#f59e0b",
+    "target-arrow-color": "#f59e0b",
+    "shadow-color": "#f59e0b",
+    "shadow-opacity": 0.8
+  }
+},
         {
           selector: "edge.pathEdge",
           style: {
@@ -1144,6 +1334,7 @@ export async function renderGraph() {
   }).run();
 
   await renderMitigations();
+updateMitigationHighlights();
   setupMitigationListeners();
 
   setTimeout(() => {
