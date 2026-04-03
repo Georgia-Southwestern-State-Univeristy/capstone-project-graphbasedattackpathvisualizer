@@ -4,8 +4,8 @@ import fcose from "cytoscape-fcose";
 cytoscape.use(fcose);
 
 let cy = null;
-let mitigationHighlightTimeout = null;
 let lastPathSignature = null;
+let lastHighlightedActions = new Set();
 let lastAiAnalysisSignature = null;
 let lastAiAnalysisData = null;
 
@@ -198,108 +198,106 @@ const MITIGATION_COLORS = {
 };
 const MITIGATION_EDGE_MAP = {
   "Email MFA": [
-    "Phishing / Credential Theft",
-    "Password Reset / SSO Abuse",
-    "OAuth Token Theft / SSO Abuse"
+    "Phishing / Credential Theft"
   ],
+
   "Web App Hardening": [
-    "Exploit Web App / Weak Login",
-    "Application Database Access"
+    "Exploit Web App / Weak Login"
   ],
+
   "VPN / Remote Access MFA": [
     "Stolen VPN Credentials"
   ],
+
   "Endpoint Detection & Response": [
-    "Malware Delivery",
-    "Privilege Escalation / Credential Dumping"
+    "Malware Delivery"
   ],
+
   "Remote Access Hardening": [
     "Remote Login (RDP / SSH)"
   ],
+
   "Conditional Access": [
-    "Password Reset / SSO Abuse",
-    "OAuth Token Theft / SSO Abuse",
     "Credential Reuse"
   ],
+
   "Identity Provider Hardening": [
-    "Password Reset / SSO Abuse",
-    "OAuth Token Theft / SSO Abuse",
-    "Over-Privileged Role Assignment"
+    "Password Reset / SSO Abuse"
   ],
+
   "SaaS Application Security Controls": [
-    "API Access / Data Sync",
     "OAuth Token Theft / SSO Abuse"
   ],
+
   "Role-Based Access Control (RBAC) Enforcement": [
-    "Over-Privileged Role Assignment",
-    "Admin DB Access",
-    "HR Data Access / Integration Abuse",
-    "Financial Data Access"
+    "Over-Privileged Role Assignment"
   ],
+
   "File Server Access Controls": [
-    "Access Shared Drive",
-    "Stored Credentials / Config Leak"
+    "Access Shared Drive"
   ],
+
   "Privileged Account Hardening": [
-    "Privilege Escalation / Credential Dumping",
-    "Domain Privilege Escalation",
-    "MDM Privilege Abuse",
-    "Admin DB Access"
+    "Privilege Escalation / Credential Dumping"
   ],
+
   "Network Segmentation": [
-    "Direct Network Access",
-    "Local Network Access",
-    "Internal Service Pivot",
-    "Internal Application Access",
-    "HR System Access",
-    "Finance System Access",
-    "Backup System Access",
-    "Application Database Access"
+    "Direct Network Access"
   ],
+
   "Wireless Security Hardening": [
-    "Wireless Network Compromise"
+    "Wireless Network Compromise",
+    "Local Network Access"
   ],
+
   "Perimeter Firewall Hardening": [
     "Perimeter Device Exploit"
   ],
+
   "Internal Application Hardening": [
+    "Internal Service Pivot",
     "Internal Application Access",
     "Application Database Access"
   ],
+
   "Email Server Hardening": [
-    "Mailbox / Server Abuse",
-    "Malicious Email Delivery / Mail Rule Abuse"
+    "Mailbox / Server Abuse"
   ],
+
   "Email Security Filtering": [
-    "Phishing / Credential Theft",
-    "Malware Delivery",
     "Malicious Email Delivery / Mail Rule Abuse"
   ],
+
   "Domain Controller Hardening": [
-    "Domain Privilege Escalation",
-    "Credential Reuse"
+    "Domain Privilege Escalation"
   ],
+
   "HR System Access Controls": [
     "HR System Access",
     "HR Data Access / Integration Abuse"
   ],
+
   "Finance System Access Controls": [
     "Finance System Access",
     "Financial Data Access"
   ],
+
   "Backup Server Protection": [
     "Backup System Access",
     "Backup Data Exposure"
   ],
+
   "MDM Security Controls": [
     "Device Management Abuse",
     "MDM Privilege Abuse"
   ],
+
   "DNS Security Monitoring": [
     "Network Discovery"
   ],
+
   "DNS Access Restrictions": [
-    "Network Discovery"
+    "Internal Service Pivot"
   ]
 };
 // --- UTILITY FUNCTIONS ---
@@ -511,46 +509,58 @@ async function fetchCurrentUserInfo() {
 
   return res.json();
 }
-function updateMitigationHighlights({ autoClear = true } = {}) {
+function updateMitigationHighlights() {
   if (!cy) return;
-
-  if (mitigationHighlightTimeout) {
-    clearTimeout(mitigationHighlightTimeout);
-    mitigationHighlightTimeout = null;
-  }
-
-  cy.edges().removeClass("mitigationHighlight");
-  cy.nodes().removeClass("mitigationNodeHighlight");
 
   const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
   const selectedMitigationNames = Array.from(checkedBoxes).map(cb => cb.dataset.name);
 
-  const highlightedActions = new Set();
+  const newHighlightedActions = new Set();
 
   selectedMitigationNames.forEach(name => {
     const actions = MITIGATION_EDGE_MAP[name] || [];
-    actions.forEach(action => highlightedActions.add(action));
+    actions.forEach(action => newHighlightedActions.add(action));
   });
+
+
+  const removedActions = new Set(
+    [...lastHighlightedActions].filter(a => !newHighlightedActions.has(a))
+  );
+
+
+  cy.edges().removeClass("mitigationHighlight mitigationRemoved");
+  cy.nodes().removeClass("mitigationNodeHighlight mitigationNodeRemoved");
+
 
   cy.edges().forEach(edge => {
     const action = edge.data("attackAction");
 
-    if (highlightedActions.has(action)) {
+    if (newHighlightedActions.has(action)) {
       edge.addClass("mitigationHighlight");
       edge.source().addClass("mitigationNodeHighlight");
       edge.target().addClass("mitigationNodeHighlight");
     }
   });
 
-  if (autoClear) {
-    mitigationHighlightTimeout = setTimeout(() => {
-      if (!cy) return;
 
-      cy.edges().removeClass("mitigationHighlight");
-      cy.nodes().removeClass("mitigationNodeHighlight");
-      mitigationHighlightTimeout = null;
-    }, 2500);
-  }
+  cy.edges().forEach(edge => {
+    const action = edge.data("attackAction");
+
+    if (removedActions.has(action)) {
+      edge.addClass("mitigationRemoved");
+      edge.source().addClass("mitigationNodeRemoved");
+      edge.target().addClass("mitigationNodeRemoved");
+    }
+  });
+
+
+  setTimeout(() => {
+    cy.edges().removeClass("mitigationRemoved");
+    cy.nodes().removeClass("mitigationNodeRemoved");
+  }, 800);
+
+
+  lastHighlightedActions = newHighlightedActions;
 }
 async function renderMitigations() {
   const container = document.getElementById("mitigationContainer");
@@ -1159,6 +1169,26 @@ export async function renderGraph() {
     "border-color": "#22c55e",
     "shadow-blur": 10,
     "shadow-color": "#22c55e",
+    "shadow-opacity": 0.5
+  }
+},
+{
+  selector: "edge.mitigationRemoved",
+  style: {
+    width: 5,
+    "line-color": "#ef4444",
+    "target-arrow-color": "#ef4444",
+    "transition-property": "line-color, width",
+    "transition-duration": "0.3s"
+  }
+},
+{
+  selector: "node.mitigationNodeRemoved",
+  style: {
+    "border-width": 4,
+    "border-color": "#ef4444",
+    "shadow-blur": 10,
+    "shadow-color": "#ef4444",
     "shadow-opacity": 0.5
   }
 },
