@@ -71,7 +71,9 @@ public class VisualizerController {
 
     // Returns the attack graph structure filtered by the authenticated user's BusinessProfile.
     @GetMapping("/graph")
-    public ResponseEntity<Map<String, Object>> getGraph(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> getGraph(
+            @RequestParam(required = false) List<Integer> mitigations,
+            Authentication authentication) {
 
         UserEntity user = userService.getUserByEmail(authentication.getName());
 
@@ -86,7 +88,7 @@ public class VisualizerController {
             return ResponseEntity.notFound().build();
         }
 
-        var graph = graphService.getFilteredGraph(profile, null);
+        var graph = graphService.getFilteredGraph(profile, mitigations);
 
         List<Node> nodes = new ArrayList<>(graph.vertexSet());
         List<GraphEdgeDTO> edges = new ArrayList<>();
