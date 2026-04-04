@@ -12,161 +12,221 @@ let lastAiAnalysisData = null;
 // --- CONFIGURATION & DATA MAPS ---
 
 const NODE_DESCRIPTIONS = {
-  ATTACKER: "The starting point of the simulation representing an external threat actor.",
-  WEB_APP: "Public-facing company web application; a common entry point for exploits.",
-  VPN: "Remote access gateway providing entry into the internal corporate network.",
-  EMPLOYEE_EMAIL: "Corporate email accounts; primary targets for phishing and credential theft.",
-  EMPLOYEE_WORKSTATION: "Standard user endpoint used for internal lateral movement.",
-  IDENTITY_PROVIDER: "The IdP (like Okta or Azure AD) managing authentication and SSO.",
-  ADMIN_ACCOUNT: "High-privilege credentials capable of managing databases and servers.",
-  CUSTOMER_DB: "The ultimate target; contains sensitive customer PII and records.",
-  FILE_SERVER: "Internal storage containing shared documents and configuration files.",
-  THIRD_PARTY_SAAS: "External cloud services (SaaS) integrated with corporate identity.",
-  EMAIL_SERVER: "Business email infrastructure used for message delivery and mail access.",
-  DOMAIN_CONTROLLER: "Centralized authentication and directory management server.",
-  INTERNAL_APP: "Internal business application accessible from inside the organization.",
-  HR_SYSTEM: "Human resources platform containing employee-related records.",
-  FINANCE_SYSTEM: "Financial system containing accounting or payment-related data.",
-  BACKUP_SERVER: "System used to store or manage organization backups.",
-  MDM_SERVER: "Mobile device management platform used to manage endpoints and devices.",
-  WIRELESS_ACCESS_POINT: "Wireless network access device providing internal connectivity.",
-  FIREWALL: "Perimeter filtering and traffic control device between networks.",
-  DNS_SERVER: "Internal or business DNS infrastructure used for hostname resolution."
+  ATTACKER: {
+    desc: "Represents the external threat actor attempting to penetrate the business environment. This node is the starting point of every simulated attack path and models the perspective of an unauthorized outsider.",
+    impact: "It establishes where the attack begins and provides the baseline from which all possible attack paths are evaluated."
+  },
+  WEB_APP: {
+    desc: "A public-facing business application that can be reached from the internet. Because it is externally exposed, it is a common target for exploits, weak authentication attacks, and application-layer abuse.",
+    impact: "If compromised, it can provide a direct foothold into internal systems, connected services, or backend data sources."
+  },
+  VPN: {
+    desc: "The organization’s remote access gateway, used by employees to connect into the internal network. VPN services are high-value targets because they provide trusted entry into otherwise protected systems.",
+    impact: "Compromising VPN access can let an attacker appear as a legitimate remote user and move deeper into the environment."
+  },
+  EMPLOYEE_EMAIL: {
+    desc: "Corporate email accounts used for daily communication and account-linked services. Email is frequently targeted because it can be used for phishing, account recovery abuse, and internal impersonation.",
+    impact: "A compromised mailbox can expose credentials, sensitive communication, and create opportunities for further social engineering."
+  },
+  EMPLOYEE_WORKSTATION: {
+    desc: "A standard employee endpoint such as a desktop or laptop used for business operations. Workstations often become the first internal system an attacker controls after initial access is achieved.",
+    impact: "Once compromised, a workstation can be used for credential theft, malware execution, and lateral movement to other internal assets."
+  },
+  IDENTITY_PROVIDER: {
+    desc: "The central authentication platform that manages login flows, account trust, and single sign-on access. It is a critical control point because many other systems rely on it for identity verification.",
+    impact: "If an attacker reaches the identity provider, they may gain broad access across multiple connected services and accounts."
+  },
+  ADMIN_ACCOUNT: {
+    desc: "A privileged account with elevated permissions over business systems, servers, or data stores. These accounts are especially valuable because they can bypass many restrictions that apply to normal users.",
+    impact: "Compromising an admin account can dramatically reduce attack difficulty and open direct paths to high-value assets."
+  },
+  CUSTOMER_DB: {
+    desc: "The central data store containing sensitive customer information and important business records. This is typically the highest-value target in the attack graph.",
+    impact: "If reached, the attacker may be able to view, export, alter, or destroy critical customer data."
+  },
+  FILE_SERVER: {
+    desc: "An internal server used to store shared business files, documents, and configuration data. It often contains operational information that supports both normal business use and attacker discovery.",
+    impact: "A compromised file server can expose sensitive records, internal documentation, and stored credentials that help attackers advance."
+  },
+  THIRD_PARTY_SAAS: {
+    desc: "An external software-as-a-service platform connected to the business through accounts, integrations, or shared identity systems. These tools often extend the organization’s attack surface beyond its own network.",
+    impact: "If compromised, SaaS access can expose business data and provide additional trusted paths into other connected systems."
+  },
+  EMAIL_SERVER: {
+    desc: "The infrastructure responsible for processing, storing, or routing business email traffic. It supports communication flow and can hold a large amount of sensitive correspondence.",
+    impact: "Compromising the email server can enable message interception, malicious delivery, and long-term visibility into internal communication."
+  },
+  DOMAIN_CONTROLLER: {
+    desc: "A core directory and authentication server that manages domain identities, permissions, and trust relationships. It is one of the most strategically important internal systems in many business environments.",
+    impact: "If compromised, it can provide centralized control over users, devices, and access policies across the network."
+  },
+  INTERNAL_APP: {
+    desc: "A business application intended for internal use by employees or trusted systems. Internal applications often have direct access to operational data and may rely on trusted network assumptions.",
+    impact: "Once reached, an attacker may gain access to additional data, application functions, or backend systems that were not directly exposed before."
+  },
+  HR_SYSTEM: {
+    desc: "The human resources platform used to manage employee information, personnel records, and related workflows. It often contains highly sensitive personal and organizational data.",
+    impact: "Compromising the HR system can expose employee records and give attackers useful information for impersonation, fraud, or follow-on attacks."
+  },
+  FINANCE_SYSTEM: {
+    desc: "A financial platform used for accounting, payroll, reporting, or payment-related operations. Because it handles high-value information, it is a major target for both theft and disruption.",
+    impact: "Attackers who reach this system may gain access to sensitive financial records or opportunities for fraud and operational damage."
+  },
+  BACKUP_SERVER: {
+    desc: "A system used to store backups or support data recovery operations for the organization. Backup infrastructure is important not only for the data it contains, but also for resilience after an incident.",
+    impact: "If compromised, attackers may access complete historical data copies or weaken the organization’s ability to recover from an attack."
+  },
+  MDM_SERVER: {
+    desc: "A mobile or endpoint device management platform used to configure, secure, and control managed devices. Because it has administrative reach over many endpoints, it is highly sensitive.",
+    impact: "Attackers who gain access to the MDM platform can potentially influence or control large numbers of devices from one central point."
+  },
+  WIRELESS_ACCESS_POINT: {
+    desc: "A wireless networking device that provides internal connectivity to approved users and systems. If weakly protected, it can become an entry point into the local network.",
+    impact: "Compromise here can allow attackers to move from external proximity to internal network access with much less resistance."
+  },
+  FIREWALL: {
+    desc: "A perimeter security device that filters and controls traffic between networks. It plays an important role in segmenting systems and limiting unauthorized access.",
+    impact: "If bypassed or compromised, attackers may gain visibility into internal services or weaken one of the organization’s key boundary defenses."
+  },
+  DNS_SERVER: {
+    desc: "A server responsible for resolving hostnames and supporting internal network communication. It also provides useful visibility into how systems are named and connected.",
+    impact: "Attackers can use DNS access for discovery, redirection, or better understanding of the internal environment."
+  }
 };
 
 const ATTACK_DETAILS = {
   "Phishing / Credential Theft": {
-    desc: "Social engineering to trick employees into revealing credentials.",
-    rationale: "Relies on successful user interaction and convincing lures."
+    desc: "Attackers use deceptive emails or messages to trick employees into revealing usernames, passwords, or other login details. Once the victim interacts with the lure, the attacker can capture credentials and reuse them to access internal systems. This is one of the most common initial access techniques in real-world attacks.",
+    rationale: "This method targets human behavior instead of technical flaws, which makes it highly effective even in otherwise well-defended environments."
   },
   "Exploit Web App / Weak Login": {
-    desc: "Exploiting vulnerabilities in public-facing web applications or brute-forcing weak credentials.",
-    rationale: "Web apps are high-exposure targets requiring specific exploit payloads."
+    desc: "An attacker targets a public-facing web application by exploiting software vulnerabilities or attempting to guess weak credentials. If successful, this can provide unauthorized access to internal functionality, sensitive data, or connected backend services. Internet-exposed systems make this a frequent entry point.",
+    rationale: "Public web applications are constantly exposed to attackers and often serve as a direct path into the environment if security controls are weak."
   },
   "Stolen VPN Credentials": {
-    desc: "Using compromised VPN accounts to gain a foothold in the internal network.",
-    rationale: "VPNs provide direct encrypted access; difficulty depends on MFA presence."
+    desc: "The attacker uses compromised VPN credentials to log in as a legitimate remote user. This gives them a foothold inside the internal network without needing to bypass external perimeter defenses directly. Once connected, they can begin exploring internal systems and expanding access.",
+    rationale: "VPN access is highly valuable because it provides trusted network entry and can dramatically reduce the effort required for lateral movement."
   },
   "Malware Delivery": {
-    desc: "Chaining vulnerabilities to execute malicious code on a target.",
-    rationale: "Requires moderate technical effort and user execution."
+    desc: "Malware is delivered to the target through phishing, malicious downloads, or exploit chains that cause harmful code to run on the system. Once executed, it can establish persistence, steal information, or provide remote control to the attacker. This step often prepares the environment for additional compromise.",
+    rationale: "Malware enables attackers to automate control, maintain access, and perform follow-on actions that would be difficult through manual interaction alone."
   },
   "Remote Login (RDP / SSH)": {
-    desc: "Using legitimate administrative protocols to move laterally between systems.",
-    rationale: "Commonly allowed in internal networks, making it a low-noise movement method."
+    desc: "The attacker uses remote administration protocols such as RDP or SSH to move between systems after obtaining valid credentials or access. Because these are legitimate management tools, the activity may blend in with normal administrative behavior. This makes it a practical technique for lateral movement.",
+    rationale: "Using normal remote access protocols reduces noise and allows attackers to move deeper into the network without relying on noisy exploit activity."
   },
   "Credential Reuse": {
-    desc: "Applying obtained credentials to other internal systems.",
-    rationale: "Low-effort technique once an initial set is compromised."
+    desc: "Credentials stolen from one account are reused against other internal services and systems. If passwords are shared or reused across the environment, the attacker can quickly expand access with little additional effort. This often allows movement from low-value accounts to more sensitive systems.",
+    rationale: "Poor password hygiene and reused credentials make this a very efficient method for broadening access after the first compromise."
   },
   "Password Reset / SSO Abuse": {
-    desc: "Abusing identity workflows to reset or hijack accounts.",
-    rationale: "Requires understanding identity system authentication flows."
+    desc: "The attacker abuses password reset mechanisms or single sign-on workflows to take control of additional accounts. Weak recovery steps, poor verification, or misconfigured identity flows can make this possible. This allows access without requiring the original password to be known.",
+    rationale: "Identity recovery and SSO processes are powerful account control points, so weaknesses here can let attackers bypass traditional credential theft barriers."
   },
   "OAuth Token Theft / SSO Abuse": {
-    desc: "Stealing active session tokens to bypass authentication entirely.",
-    rationale: "Highly effective as it bypasses standard password-based MFA."
+    desc: "Instead of stealing passwords, the attacker captures active session or OAuth tokens from a compromised system or browser. Those tokens can often be replayed to access services directly without triggering standard login prompts. This can allow attackers to bypass password checks and sometimes MFA.",
+    rationale: "Session tokens represent already-authenticated access, which makes them extremely valuable and difficult to defend against once stolen."
   },
   "Over-Privileged Role Assignment": {
-    desc: "Exploiting users or accounts with more permissions than necessary.",
-    rationale: "Configuration-based weakness that significantly lowers the barrier for attackers."
+    desc: "The attacker benefits from a user or service account having more permissions than it actually needs. By compromising that account, they inherit elevated access to sensitive systems, administrative functions, or restricted data. This reduces the need for additional privilege escalation.",
+    rationale: "Excessive permissions increase blast radius and let attackers move faster by turning ordinary account compromise into high-impact access."
   },
   "Access Shared Drive": {
-    desc: "Gaining access to internal file servers and shared documentation.",
-    rationale: "Often weakly protected once the internal network is breached."
+    desc: "After gaining internal access, the attacker reaches shared storage used for documents, scripts, and business files. These locations may contain sensitive records, configuration information, or credentials that support further compromise. Shared storage is often a valuable source of discovery material.",
+    rationale: "Shared drives commonly hold useful internal information and are frequently less protected once an attacker is already inside the network."
   },
   "Privilege Escalation / Credential Dumping": {
-    desc: "Extracting high-level credentials from memory or exploiting OS kernels.",
-    rationale: "Technical and noisy; requires local system access first."
+    desc: "The attacker attempts to gain higher privileges by exploiting the operating system, abusing local trust relationships, or extracting credentials from memory. This can turn a standard user foothold into administrative control. Once elevated, the attacker can access more systems and defenses become harder to enforce.",
+    rationale: "Administrative privileges are a major force multiplier because they unlock broader system access and make later attack steps much easier."
   },
   "Direct Network Access": {
-    desc: "Bypassing internal controls to reach network resources.",
-    rationale: "Requires internal positioning and network awareness."
+    desc: "From a compromised internal position, the attacker directly reaches additional network resources that were previously inaccessible. This may include internal servers, sensitive applications, or isolated data systems. Weak segmentation makes this kind of movement much easier.",
+    rationale: "Direct internal reach expands the attacker’s options quickly and reduces the need for more complex compromise methods."
   },
   "Stored Credentials / Config Leak": {
-    desc: "Finding plain-text passwords in configuration files or scripts.",
-    rationale: "Purely dependent on discovery; very easy if documentation is poor."
+    desc: "The attacker discovers plaintext passwords, secrets, or connection details stored in scripts, configuration files, or documentation. These exposed values can then be used to authenticate to other systems or services. Poor secret management turns ordinary files into valuable attack resources.",
+    rationale: "When credentials are stored insecurely, attackers can gain powerful access without needing to crack passwords or defeat authentication controls."
   },
   "API Access / Data Sync": {
-    desc: "Using stolen API keys to extract data from cloud databases.",
-    rationale: "Targets the data layer directly, often bypassing traditional host security."
+    desc: "The attacker uses compromised API keys, service credentials, or data synchronization pathways to interact directly with backend systems. This can allow access to cloud data, business records, or application functions without using a normal user interface. API pathways often provide efficient access to high-value data.",
+    rationale: "Direct service-to-service access can bypass many endpoint-focused defenses and lead attackers straight to critical data flows."
   },
   "Admin DB Access": {
-    desc: "Using full administrative rights to query or export the customer database.",
-    rationale: "The final objective; difficulty is minimal once admin status is achieved."
+    desc: "With administrative privileges, the attacker directly accesses the customer database to query, export, alter, or destroy sensitive records. This typically represents the final objective of the attack path. At this stage, business impact is high because core data assets are fully exposed.",
+    rationale: "Once database administrative access is achieved, only a few remaining barriers usually stand between the attacker and the organization’s most valuable data."
   },
 
   "Wireless Network Compromise": {
-    desc: "Gaining access to the internal network by exploiting weak wireless security or credentials.",
-    rationale: "Wireless networks often expose internal access if not properly segmented or secured."
+    desc: "The attacker gains access to the organization’s wireless network by abusing weak credentials, insecure configurations, or poor wireless protections. Once connected, they may be treated like an internal user and can begin probing additional systems. This can provide a quiet entry point into the environment.",
+    rationale: "Wireless access can collapse the distance between an external attacker and the internal network if segmentation and authentication are weak."
   },
   "Perimeter Device Exploit": {
-    desc: "Targeting firewall or edge devices through misconfigurations or known vulnerabilities.",
-    rationale: "Perimeter devices are high-value targets that can expose internal services if compromised."
+    desc: "The attacker targets an exposed firewall or edge device through known vulnerabilities, weak administration settings, or configuration mistakes. Compromising this kind of device can reveal internal services or weaken the organization’s boundary protections. It can also provide strategic access for further movement.",
+    rationale: "Perimeter devices sit at critical trust boundaries, so weaknesses here can expose large portions of the internal environment."
   },
   "Local Network Access": {
-    desc: "Accessing internal systems after gaining presence on the local network.",
-    rationale: "Once inside the network, lateral movement becomes significantly easier."
+    desc: "After gaining presence on the local network, the attacker can directly reach internal systems that are not exposed to the internet. This opens the door to scanning, service abuse, and further compromise of trusted internal resources. Internal presence often makes later steps much easier.",
+    rationale: "Being on the local network removes many external barriers and gives the attacker a much stronger position for exploration and lateral movement."
   },
   "Internal Service Pivot": {
-    desc: "Using one compromised system to pivot into another internal service.",
-    rationale: "Internal trust relationships allow attackers to move deeper into the network."
+    desc: "The attacker uses one compromised internal system as a stepping stone into another trusted service. This may rely on reused credentials, implicit trust, or accessible internal connections between systems. Pivots like this help attackers move deeper without returning to the original entry point.",
+    rationale: "Internal trust relationships often create efficient pathways for attackers to advance from one compromised asset to the next."
   },
   "Mailbox / Server Abuse": {
-    desc: "Exploiting email server features or mailbox access to maintain persistence or spread attacks.",
-    rationale: "Email systems provide both communication control and data access."
+    desc: "The attacker abuses email server capabilities or mailbox access to monitor communication, hide activity, or spread additional malicious content. They may create forwarding rules, read internal messages, or use trusted infrastructure to deliver phishing internally. This can support both persistence and further compromise.",
+    rationale: "Email systems provide both access to sensitive business communication and a trusted platform for expanding the attack."
   },
   "Domain Privilege Escalation": {
-    desc: "Escalating privileges within the domain to gain administrative control.",
-    rationale: "Domain escalation enables widespread access across systems and accounts."
+    desc: "The attacker escalates privileges within the domain environment to gain broader administrative control. This can involve abusing misconfigurations, stolen credentials, or weak delegation paths. Once domain-level control is achieved, many internal systems become accessible.",
+    rationale: "Domain privilege is extremely powerful because it can provide centralized control over identities, systems, and security policies."
   },
   "Internal Application Access": {
-    desc: "Accessing internal business applications after gaining initial system access.",
-    rationale: "Internal apps often trust authenticated users and lack strict defenses."
+    desc: "The attacker reaches an internal business application after compromising a connected user or workstation. These applications may expose sensitive records, workflows, or backend integrations that help the attacker advance further. Internal apps are often less hardened because they are assumed to be trusted.",
+    rationale: "Applications inside the network frequently trust authenticated internal users, which makes them attractive pivot points after a foothold is established."
   },
   "HR System Access": {
-    desc: "Accessing a human resources system from a compromised internal workstation to view or interact with employee-related records.",
-    rationale: "Once an attacker has internal user-level access, HR platforms may be reachable through reused credentials, trusted sessions, or weak internal access controls."
+    desc: "The attacker accesses the human resources platform from a compromised internal system using available credentials or trusted access paths. This may expose employee records, organizational details, or connected business workflows. HR systems can also reveal information useful for future phishing or impersonation.",
+    rationale: "HR platforms contain valuable identity and personnel information that can support both data theft and follow-on social engineering."
   },
   "Finance System Access": {
-    desc: "Accessing a financial system from a compromised internal workstation to view or interact with accounting, payroll, or payment-related information.",
-    rationale: "Finance applications are often reachable from internal user systems and become attractive targets once an attacker gains a foothold inside the network."
+    desc: "The attacker reaches the financial platform from an already compromised internal position and begins interacting with accounting, payroll, or payment-related data. This may expose highly sensitive business information or enable fraudulent activity. Finance systems are especially valuable because of both data sensitivity and business impact.",
+    rationale: "Financial systems often hold critical records and may provide pathways to fraud, data theft, or operational disruption."
   },
   "Backup System Access": {
-    desc: "Accessing backup systems to retrieve sensitive data or disable recovery capabilities.",
-    rationale: "Backups contain full data copies and are often less protected."
+    desc: "The attacker accesses backup infrastructure to view stored copies of important systems or interfere with recovery processes. Backup platforms can expose large amounts of historical or complete organizational data. They are also strategic targets because damaging them can make incident recovery far more difficult.",
+    rationale: "Backup systems combine high data value with high recovery importance, making them especially attractive to attackers."
   },
   "Device Management Abuse": {
-    desc: "Abusing device management systems to control endpoints or deploy malicious configurations.",
-    rationale: "MDM systems have high privileges across managed devices."
+    desc: "The attacker abuses a device management platform to issue commands, deploy settings, or control managed endpoints. This can turn one compromise into wider control across many systems. Because management tools are highly trusted, abuse here can have broad impact.",
+    rationale: "Management platforms often have elevated authority over many devices, so compromising them creates a strong multiplier effect."
   },
   "Network Discovery": {
-    desc: "Scanning and mapping internal systems using network services like DNS.",
-    rationale: "Understanding the network layout enables more targeted attacks."
+    desc: "The attacker scans and maps internal systems, services, and naming information to better understand the environment. This may involve querying DNS, enumerating hosts, or identifying reachable applications and servers. Discovery helps the attacker choose the most efficient next step.",
+    rationale: "Good visibility into the environment allows attackers to move more strategically and avoid wasting effort on less valuable targets."
   },
   "Malicious Email Delivery / Mail Rule Abuse": {
-    desc: "Using compromised email infrastructure to deliver malicious content or create hidden forwarding rules.",
-    rationale: "Email rules can persistently redirect or hide attacker activity."
+    desc: "The attacker uses compromised email infrastructure to send trusted-looking malicious messages or create hidden mail rules that support persistence. This can help spread phishing internally, conceal activity, or redirect sensitive communications. It extends both access and attacker influence.",
+    rationale: "Compromised email systems provide a trusted delivery channel and long-term visibility into communication flows."
   },
   "MDM Privilege Abuse": {
-    desc: "Using elevated MDM permissions to gain administrative-level control over devices.",
-    rationale: "MDM systems can enforce policies and execute actions across endpoints."
+    desc: "The attacker leverages elevated permissions in the mobile device management platform to gain deeper control over endpoints. This can include pushing settings, enforcing policies, or executing actions that help establish broader access. It effectively turns centralized management power into an attack advantage.",
+    rationale: "MDM privilege is dangerous because it can translate into large-scale control over many user devices from one central platform."
   },
   "Application Database Access": {
-    desc: "Accessing backend databases through compromised applications.",
-    rationale: "Applications often have direct connections to sensitive data stores."
+    desc: "The attacker reaches backend databases through a compromised application that already has trusted data connections. Instead of attacking the database directly, they abuse the application’s existing access path. This can expose sensitive records while avoiding some direct database defenses.",
+    rationale: "Applications often act as trusted intermediaries to databases, making them a practical stepping stone to sensitive data."
   },
   "HR Data Access / Integration Abuse": {
-    desc: "Using the HR system itself, or its connected integrations, to retrieve sensitive employee or organizational data from the central data store.",
-    rationale: "Once an attacker reaches the HR platform, trusted integrations and backend connections can make sensitive records easier to reach than attacking the data store directly."
+    desc: "After reaching the HR system, the attacker abuses its integrations or internal permissions to retrieve broader employee or organizational data from connected systems. Trusted backend links can make it easier to reach sensitive records than attacking the central store directly. This expands the value of the HR foothold.",
+    rationale: "Connected business platforms often inherit trusted access paths that attackers can exploit to reach data beyond the initial system."
   },
   "Financial Data Access": {
-    desc: "Using a compromised finance platform to retrieve, export, or manipulate sensitive financial records stored in the organization’s central data systems.",
-    rationale: "Finance systems commonly have privileged access to highly valuable business data, making them effective stepping stones to the final target."
+    desc: "The attacker uses the compromised finance platform to retrieve, export, or manipulate sensitive financial records stored in connected business systems. Because finance tools often have privileged access to important data, they can serve as an efficient bridge to high-value assets. This step can lead directly to major business impact.",
+    rationale: "Finance platforms frequently combine sensitive data access with strong business importance, which makes them ideal stepping stones to critical outcomes."
   },
   "Backup Data Exposure": {
-    desc: "Extracting sensitive data from backup systems.",
-    rationale: "Backups often contain unencrypted or complete datasets."
+    desc: "The attacker extracts sensitive information from backup repositories rather than from live production systems. Backups may contain complete datasets, historical records, and copies of critical configurations. This allows significant data theft even if primary systems are more tightly protected.",
+    rationale: "Backup repositories often contain broad, high-value data collections and may be less monitored than production environments."
   }
 };
 
@@ -348,7 +408,16 @@ function animateValue(obj, start, end, duration) {
 // --- API FETCHERS ---
 
 async function fetchGraph() {
-  const res = await fetch("/api/graph", {
+  const checkedBoxes = document.querySelectorAll(".mitigation-checkbox:checked");
+  const ids = Array.from(checkedBoxes).map(cb => cb.dataset.id);
+
+  let url = "/api/graph";
+
+  if (ids.length > 0) {
+    url += `?mitigations=${ids.join(",")}`;
+  }
+
+  const res = await fetch(url, {
     credentials: "include"
   });
   if (!res.ok) throw new Error(`GET /api/graph failed: ${res.status}`);
@@ -509,6 +578,23 @@ async function fetchCurrentUserInfo() {
 
   return res.json();
 }
+
+async function refreshEdgeWeightsOnly() {
+  if (!cy) return;
+
+  const apiGraph = await fetchGraph();
+  const updatedEdges = apiGraph.edges ?? [];
+
+  updatedEdges.forEach((e) => {
+    const edgeId = `${e.source}__${e.target}__${e.attackType ?? ""}`;
+    const cyEdge = cy.getElementById(edgeId);
+
+    if (!cyEdge.empty()) {
+      cyEdge.data("weight", Number(e.weight ?? 1));
+    }
+  });
+}
+
 function updateMitigationHighlights() {
   if (!cy) return;
 
@@ -522,15 +608,12 @@ function updateMitigationHighlights() {
     actions.forEach(action => newHighlightedActions.add(action));
   });
 
-
   const removedActions = new Set(
     [...lastHighlightedActions].filter(a => !newHighlightedActions.has(a))
   );
 
-
   cy.edges().removeClass("mitigationHighlight mitigationRemoved");
   cy.nodes().removeClass("mitigationNodeHighlight mitigationNodeRemoved");
-
 
   cy.edges().forEach(edge => {
     const action = edge.data("attackAction");
@@ -542,7 +625,6 @@ function updateMitigationHighlights() {
     }
   });
 
-
   cy.edges().forEach(edge => {
     const action = edge.data("attackAction");
 
@@ -553,16 +635,15 @@ function updateMitigationHighlights() {
     }
   });
 
-
   setTimeout(() => {
     cy.edges().removeClass("mitigationRemoved");
     cy.nodes().removeClass("mitigationNodeRemoved");
   }, 800);
 
-
   lastHighlightedActions = newHighlightedActions;
 }
-async function renderMitigations() {
+
+async function renderMitigations(selectedIds = []) {
   const container = document.getElementById("mitigationContainer");
   if (!container) return;
 
@@ -571,9 +652,10 @@ async function renderMitigations() {
   container.innerHTML = "";
 
   mitigations.forEach(mit => {
-
     const colorClass =
       MITIGATION_COLORS[mit.name] || "peer-checked:bg-emerald-500";
+
+    const isChecked = selectedIds.includes(String(mit.id));
 
     const wrapper = document.createElement("div");
 
@@ -583,10 +665,11 @@ async function renderMitigations() {
           ${mit.name}
         </span>
         <div class="relative">
-         <input type="checkbox"
-       class="sr-only peer mitigation-checkbox"
-       data-id="${mit.id}"
-       data-name="${mit.name}">
+          <input type="checkbox"
+                 class="sr-only peer mitigation-checkbox"
+                 data-id="${mit.id}"
+                 data-name="${mit.name}"
+                 ${isChecked ? "checked" : ""}>
           <div class="w-12 h-6 bg-slate-600 rounded-full ${colorClass} transition-all duration-300 shadow-inner"></div>
           <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>
         </div>
@@ -594,10 +677,11 @@ async function renderMitigations() {
     `;
 
     container.appendChild(wrapper);
+
     const checkbox = wrapper.querySelector(".mitigation-checkbox");
-checkbox?.addEventListener("change", () => {
-  updateMitigationHighlights();
-});
+    checkbox?.addEventListener("change", () => {
+      updateMitigationHighlights();
+    });
   });
 }
 
@@ -605,7 +689,15 @@ function setupMitigationListeners() {
   const checkboxes = document.querySelectorAll(".mitigation-checkbox");
 
   checkboxes.forEach(cb => {
-    cb.addEventListener("change", () => {
+    cb.addEventListener("change", async () => {
+
+      await refreshEdgeWeightsOnly();
+
+      // If an edge is currently selected, refresh the inspector card
+      const selectedEdge = cy ? cy.edges(":selected") : null;
+      if (selectedEdge && selectedEdge.length > 0) {
+        showDetailCard(selectedEdge[0].data(), "edge");
+      }
 
       // Hide AI modal
       const aiModal = document.getElementById("aiModal");
@@ -715,46 +807,102 @@ export function showDetailCard(data, type) {
   title.className = "text-sm font-bold text-slate-400 uppercase tracking-widest";
 
   if (type === "node") {
-    const desc = NODE_DESCRIPTIONS[data.id] || "Internal system asset.";
-    title.textContent = "Node Inspector";
-    content.innerHTML = `
-      <div class="space-y-4">
-        <section>
-          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Identifier</label>
-          <div class="text-base text-white font-semibold">${data.label}</div>
-        </section>
-        <section>
-          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
-          <p class="text-sm text-slate-300 leading-relaxed">${desc}</p>
-        </section>
-      </div>
-    `;
+  const details = NODE_DESCRIPTIONS[data.id] || {
+    desc: "This system is part of the modeled business environment and may play a role in attack progression.",
+    impact: "Its presence can influence how attackers move through the network and reach higher-value assets."
+  };
+
+  title.textContent = "Node Inspector";
+
+  content.innerHTML = `
+    <div class="space-y-5">
+
+      <section class="space-y-1">
+        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">System</div>
+        <div class="text-xl font-semibold leading-tight">${data.label}</div>
+      </section>
+
+      <section class="space-y-1">
+        <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</div>
+        <p class="text-sm text-slate-300 leading-5">${details.desc}</p>
+      </section>
+
+      <section class="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 space-y-1">
+        <div class="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Why It Matters</div>
+        <p class="text-[12px] text-slate-300 italic leading-5">${details.impact}</p>
+      </section>
+
+    </div>
+  `;
+  return;
   } else {
     const details = ATTACK_DETAILS[data.attackAction] || {
       desc: "Information is being updated.",
       rationale: "N/A"
     };
+
+    const sourceNode = cy ? cy.getElementById(data.source) : null;
+    const targetNode = cy ? cy.getElementById(data.target) : null;
+
+    const sourceLabel = sourceNode && !sourceNode.empty()
+      ? sourceNode.data("label")
+      : data.source;
+
+    const targetLabel = targetNode && !targetNode.empty()
+      ? targetNode.data("label")
+      : data.target;
+
+    let difficultyLabel = "Low";
+    let difficultyClass = "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20";
+
+    if (data.weight >= 5) {
+      difficultyLabel = "High";
+      difficultyClass = "text-rose-400 bg-rose-500/10 border border-rose-500/20";
+    } else if (data.weight >= 3) {
+      difficultyLabel = "Medium";
+      difficultyClass = "text-amber-400 bg-amber-500/10 border border-amber-500/20";
+    }
+
     title.textContent = "Edge Inspector";
     content.innerHTML = `
-      <div class="space-y-4">
-        <section>
-          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Method</label>
-          <div class="text-base text-rose-500 font-semibold leading-tight">${data.attackAction}</div>
+      <div class="space-y-5">
+
+        <section class="space-y-1">
+          <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Attack Method</div>
+          <div class="text-xl text-rose-400 font-semibold leading-tight">${data.attackAction}</div>
         </section>
-        <section>
-          <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</label>
-          <p class="text-sm text-slate-300 leading-relaxed">${details.desc}</p>
-        </section>
-        <div class="pt-5 space-y-3 border-t border-slate-700/30">
-          <div class="p-3 bg-slate-900/60 rounded border border-slate-700/50">
-            <label class="text-[10px] text-slate-500 uppercase font-bold block mb-1">Base Cost</label>
-            <span class="text-white font-mono font-bold text-lg">${data.weight}</span>
+
+        <section class="space-y-2">
+          <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Path Step</div>
+          <div class="rounded-xl border border-slate-700/60 bg-slate-900/40 p-3 space-y-2">
+            <div class="text-sm font-medium text-slate-200 leading-snug text-center">${sourceLabel}</div>
+            <div class="text-xs text-slate-500 font-semibold tracking-wider text-center">TO</div>
+            <div class="text-sm font-medium text-slate-200 leading-snug text-center">${targetLabel}</div>
           </div>
-          <section class="p-3 bg-amber-500/5 border border-amber-500/20 rounded">
-            <label class="text-[10px] text-amber-500 font-bold uppercase">Rationale</label>
-            <p class="text-[11px] text-slate-400 mt-1 italic leading-snug">${details.rationale}</p>
-          </section>
-        </div>
+        </section>
+
+        <section class="space-y-1">
+          <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Description</div>
+          <p class="text-sm text-slate-300 leading-5">${details.desc}</p>
+        </section>
+
+        <section class="grid grid-cols-2 gap-3 pt-1">
+          <div class="rounded-xl border border-slate-700/60 bg-slate-900/50 p-3">
+            <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-2">Current Cost</div>
+            <div class="text-2xl font-mono font-bold text-white leading-none">${data.weight}</div>
+          </div>
+
+          <div class="rounded-xl p-3 ${difficultyClass}">
+            <div class="text-[10px] uppercase font-bold tracking-wider mb-2 opacity-80">Difficulty</div>
+            <div class="text-lg font-semibold leading-none">${difficultyLabel}</div>
+          </div>
+        </section>
+
+        <section class="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 space-y-1">
+          <div class="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Why It Matters</div>
+          <p class="text-[12px] text-slate-300 italic leading-5">${details.rationale}</p>
+        </section>
+
       </div>
     `;
   }
@@ -1066,6 +1214,10 @@ export async function initializeApp() {
 }
 
 export async function renderGraph() {
+  const selectedMitigationIds = Array.from(
+  document.querySelectorAll(".mitigation-checkbox:checked")
+).map(cb => cb.dataset.id);
+
   const status = document.getElementById("status");
   const pathResult = document.getElementById("pathResult");
   if (pathResult) pathResult.classList.add("hidden");
@@ -1273,6 +1425,8 @@ export async function renderGraph() {
     });
 
     cy.on("tap", "edge", (evt) => {
+      cy.edges().unselect();
+      evt.target.select();
       showDetailCard(evt.target.data(), "edge");
     });
 
@@ -1291,7 +1445,10 @@ export async function renderGraph() {
     edge.addClass("edgeHovered");
 
     const data = edge.data();
-    tooltip.innerHTML = `${data.attackAction}`;
+    tooltip.innerHTML = `
+    <div class="text-xs font-semibold">${data.attackAction}</div>
+    <div class="text-[11px] text-slate-400">Cost: ${data.weight}</div>
+  `;
 
     tooltip.classList.remove("hidden");
   });
@@ -1363,8 +1520,8 @@ export async function renderGraph() {
     animate: false
   }).run();
 
-  await renderMitigations();
-updateMitigationHighlights();
+  await renderMitigations(selectedMitigationIds);
+  updateMitigationHighlights();
   setupMitigationListeners();
 
   setTimeout(() => {
