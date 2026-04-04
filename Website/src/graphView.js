@@ -586,7 +586,7 @@ async function refreshEdgeWeightsOnly() {
   const updatedEdges = apiGraph.edges ?? [];
 
   updatedEdges.forEach((e) => {
-    const edgeId = `${e.source}__${e.target}__${e.attackAction ?? ""}`;
+    const edgeId = `${e.source}__${e.target}__${e.attackType ?? ""}`;
     const cyEdge = cy.getElementById(edgeId);
 
     if (!cyEdge.empty()) {
