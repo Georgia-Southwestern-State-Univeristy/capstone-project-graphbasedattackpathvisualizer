@@ -1019,7 +1019,7 @@ export async function runAiAnalysis() {
   } finally {
     if (aiAnalysisBtn) {
       aiAnalysisBtn.disabled = false;
-      aiAnalysisBtn.textContent = "AI Analysis";
+      aiAnalysisBtn.textContent = "What Does This Mean?";
     }
   }
 }
