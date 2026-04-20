@@ -256,6 +256,57 @@ const MITIGATION_COLORS = {
   "DNS Security Monitoring": "peer-checked:bg-green-500",
   "DNS Access Restrictions": "peer-checked:bg-emerald-700"
 };
+
+const MITIGATION_DESCRIPTIONS = {
+  "Email MFA": "Requires a second authentication factor for employee email accounts. This helps prevent attackers from accessing email even if a password is stolen through phishing or credential theft.",
+
+  "Web App Hardening": "Improves the security of public-facing web applications through measures like patching, secure configuration, and input validation. This makes web-based attacks more difficult.",
+
+  "VPN / Remote Access MFA": "Adds multi-factor authentication to VPN or remote access logins. This reduces the risk of attackers successfully using stolen remote access credentials.",
+
+  "Endpoint Detection & Response": "Uses monitoring and detection tools on employee devices to identify suspicious behavior, malware, or attacker activity. This helps stop or contain compromise on workstations.",
+
+  "Remote Access Hardening": "Secures remote administration services like RDP or SSH by restricting access, requiring stronger controls, or disabling unnecessary exposure. This makes lateral movement harder.",
+
+  "Conditional Access": "Applies rules such as device trust, location checks, or risk-based access policies before allowing account access. This helps block suspicious sign-in attempts.",
+
+  "Identity Provider Hardening": "Strengthens SSO and identity systems by securing password reset flows, enforcing MFA, and tightening identity protections. This reduces the chance of account takeover through identity abuse.",
+
+  "SaaS Application Security Controls": "Improves the security of cloud-based business applications by restricting permissions, requiring MFA, and reducing risky third-party access. This helps protect SaaS data and connected systems.",
+
+  "Role-Based Access Control (RBAC) Enforcement": "Limits access based on job role so users only have the permissions they truly need. This reduces the damage that can happen if an account is compromised.",
+
+  "File Server Access Controls": "Restricts who can access shared drives and files through permissions and access control lists. This helps prevent attackers from easily reaching sensitive shared data.",
+
+  "Privileged Account Hardening": "Protects administrator accounts using stronger controls such as MFA, separate admin accounts, and least privilege. This makes privilege escalation and admin compromise harder.",
+
+  "Network Segmentation": "Separates systems into restricted network zones so attackers cannot move freely after gaining a foothold. This helps contain compromise and protect sensitive assets.",
+
+  "Wireless Security Hardening": "Strengthens Wi-Fi protections using secure authentication, strong passwords, and better segmentation. This reduces the chance of attackers entering through the wireless network.",
+
+  "Perimeter Firewall Hardening": "Improves firewall security through strong configuration, patching, and reduced administrative exposure. This helps defend the network boundary from external attacks.",
+
+  "Internal Application Hardening": "Secures internal applications through patching, stronger authentication, and safer configuration. This reduces the chance that attackers can pivot through trusted internal tools.",
+
+  "Email Server Hardening": "Protects the organization’s email infrastructure through stronger configuration, patching, and restricted administration. This helps prevent abuse of the mail environment.",
+
+  "Email Security Filtering": "Filters incoming and outgoing email for phishing, malicious attachments, and suspicious links. This reduces the chance of successful email-based attacks.",
+
+  "Domain Controller Hardening": "Strengthens domain controller security with tighter privileges, better monitoring, and stronger administrative protections. This helps defend one of the most critical internal systems.",
+
+  "HR System Access Controls": "Restricts access to HR platforms and employee records based on need and role. This helps protect sensitive personnel data from unauthorized access.",
+
+  "Finance System Access Controls": "Applies stronger access restrictions to financial systems so only authorized users can reach sensitive accounting or payroll data. This reduces risk of fraud and data theft.",
+
+  "Backup Server Protection": "Secures backup infrastructure with stronger permissions, isolation, and administrative controls. This helps protect recovery systems and stored backup data from attacker access.",
+
+  "MDM Security Controls": "Strengthens mobile and endpoint management systems by limiting privileges and securing administrative actions. This helps prevent broad device control if the platform is targeted.",
+
+  "DNS Security Monitoring": "Monitors DNS activity for suspicious lookups, unusual behavior, or signs of attacker discovery. This can help detect early-stage reconnaissance.",
+
+  "DNS Access Restrictions": "Limits which systems or users can query or modify DNS resources. This helps reduce attacker visibility and abuse of internal naming services."
+};
+
 const MITIGATION_EDGE_MAP = {
   "Email MFA": [
     "Phishing / Credential Theft"
@@ -651,7 +702,7 @@ async function renderMitigations(selectedIds = []) {
 
   container.innerHTML = "";
 
-  mitigations.forEach(mit => {
+  mitigations.forEach((mit) => {
     const colorClass =
       MITIGATION_COLORS[mit.name] || "peer-checked:bg-emerald-500";
 
@@ -660,20 +711,38 @@ async function renderMitigations(selectedIds = []) {
     const wrapper = document.createElement("div");
 
     wrapper.innerHTML = `
-      <label class="flex items-center justify-between cursor-pointer group">
-        <span class="font-medium group-hover:text-white transition">
-          ${mit.name}
-        </span>
-        <div class="relative">
-          <input type="checkbox"
-                 class="sr-only peer mitigation-checkbox"
-                 data-id="${mit.id}"
-                 data-name="${mit.name}"
-                 ${isChecked ? "checked" : ""}>
-          <div class="w-12 h-6 bg-slate-600 rounded-full ${colorClass} transition-all duration-300 shadow-inner"></div>
-          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>
+      <div class="space-y-1">
+        <div class="flex items-center justify-between gap-3">
+          <span class="font-medium leading-snug text-slate-200">
+            ${mit.name}
+          </span>
+
+          <label class="flex items-center justify-end cursor-pointer shrink-0">
+            <div class="relative">
+              <input type="checkbox"
+                    class="sr-only peer mitigation-checkbox"
+                    data-id="${mit.id}"
+                    data-name="${mit.name}"
+                    ${isChecked ? "checked" : ""}>
+              <div class="w-12 h-6 bg-slate-600 rounded-full ${colorClass} transition-all duration-300 shadow-inner"></div>
+              <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-6"></div>
+            </div>
+          </label>
         </div>
-      </label>
+
+        <button
+          type="button"
+          class="mitigation-info-btn text-[10.5px] text-emerald-400 hover:text-emerald-300 transition font-medium"
+        >
+          What is this?
+        </button>
+
+        <div class="mitigation-info max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+          <div class="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-[11px] text-slate-300 leading-snug">
+            ${MITIGATION_DESCRIPTIONS[mit.name] || "More information for this mitigation will be added soon."}
+          </div>
+        </div>
+      </div>
     `;
 
     container.appendChild(wrapper);
@@ -681,6 +750,52 @@ async function renderMitigations(selectedIds = []) {
     const checkbox = wrapper.querySelector(".mitigation-checkbox");
     checkbox?.addEventListener("change", () => {
       updateMitigationHighlights();
+    });
+
+    const infoBtn = wrapper.querySelector(".mitigation-info-btn");
+    const infoBox = wrapper.querySelector(".mitigation-info");
+
+    infoBtn?.addEventListener("click", () => {
+      if (!infoBox) return;
+
+      const isClosed = infoBox.classList.contains("max-h-0");
+
+      if (isClosed) {
+        infoBox.classList.remove("max-h-0");
+        infoBox.classList.add("max-h-[300px]");
+
+        setTimeout(() => {
+          let scrollArea = wrapper.parentElement;
+          while (scrollArea) {
+            const canScroll = scrollArea.scrollHeight > scrollArea.clientHeight;
+            if (canScroll) break;
+            scrollArea = scrollArea.parentElement;
+          }
+
+          if (!scrollArea) return;
+
+          const infoRect = infoBox.getBoundingClientRect();
+          const scrollRect = scrollArea.getBoundingClientRect();
+
+          const cutOffBottom = infoRect.bottom - scrollRect.bottom;
+          const cutOffTop = scrollRect.top - infoRect.top;
+
+          if (cutOffBottom > 0) {
+            scrollArea.scrollBy({
+              top: cutOffBottom + 12,
+              behavior: "smooth"
+            });
+          } else if (cutOffTop > 0) {
+            scrollArea.scrollBy({
+              top: -cutOffTop - 12,
+              behavior: "smooth"
+            });
+          }
+        }, 150);
+      } else {
+        infoBox.classList.remove("max-h-[300px]");
+        infoBox.classList.add("max-h-0");
+      }
     });
   });
 }
