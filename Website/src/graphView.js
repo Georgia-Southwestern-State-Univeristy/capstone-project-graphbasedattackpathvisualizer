@@ -795,6 +795,90 @@ async function animateAttackPath(pathResp) {
 
 // --- CARD UI EXPORTS ---
 
+export function closeAiModal() {
+  const aiModal = document.getElementById("aiModal");
+  if (aiModal) {
+    aiModal.classList.add("hidden");
+    aiModal.style.left = "";
+    aiModal.style.top = "";
+    aiModal.style.right = "1.5rem";
+  }
+}
+
+export function resetUiState() {
+  // Clear path and mitigation highlighting from graph
+  if (cy) {
+    cy.nodes().removeClass(
+      "pathNode dim mitigationNodeHighlight mitigationNodeRemoved hovered"
+    );
+    cy.edges().removeClass(
+      "pathEdge dim mitigationHighlight mitigationRemoved edgeHovered"
+    );
+    cy.elements().unselect();
+  }
+
+  // Reset mitigation switches
+  const switches = document.querySelectorAll(".mitigation-checkbox");
+  switches.forEach(sw => {
+    sw.checked = false;
+  });
+
+  // Reset path result UI
+  const pathResult = document.getElementById("pathResult");
+  const costValue = document.getElementById("totalCostValue");
+  if (pathResult) pathResult.classList.add("hidden");
+  if (costValue) costValue.innerHTML = "0";
+
+  // Reset status
+  const status = document.getElementById("status");
+  if (status) {
+    status.textContent = "System Ready";
+    status.className =
+      "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+  }
+
+  // Hide AI button
+  const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
+  if (aiAnalysisBtn) {
+    aiAnalysisBtn.classList.add("hidden");
+    aiAnalysisBtn.disabled = false;
+    aiAnalysisBtn.textContent = "What Does This Mean?";
+  }
+
+  // Hide and reset AI modal
+  closeAiModal();
+
+  // Hide inspector
+  hideDetailCard();
+
+  // Hide tooltip
+  if (tooltip) {
+    tooltip.classList.add("hidden");
+    tooltip.innerHTML = "";
+  }
+
+  // Reset cached state
+  lastPathSignature = null;
+  lastAiAnalysisSignature = null;
+  lastAiAnalysisData = null;
+  lastHighlightedActions = new Set();
+}
+
+export function resetEntireAppState() {
+  resetUiState();
+  resetProfileForm();
+
+  const profileModal = document.getElementById("profileModal");
+  if (profileModal) profileModal.classList.add("hidden");
+
+  const userProfileModal = document.getElementById("userProfileModal");
+  if (userProfileModal) userProfileModal.classList.add("hidden");
+
+  if (cy) {
+    cy.elements().remove();
+  }
+}
+
 export function showDetailCard(data, type) {
   const card = document.getElementById("detailCard");
   const content = document.getElementById("cardContent");
@@ -1025,45 +1109,7 @@ export async function runAiAnalysis() {
 }
 
 export function clearPath() {
-
-  clearPathHighlighting();
-
-  // turn off all mitigation switches
-  const switches = document.querySelectorAll(".mitigation-checkbox");
-  switches.forEach(sw => sw.checked = false);
-
-  if (cy) {
-  cy.edges().removeClass("mitigationHighlight");
-  cy.nodes().removeClass("mitigationNodeHighlight");
-}
-
-  const pathResult = document.getElementById("pathResult");
-  const status = document.getElementById("status");
-  const costValue = document.getElementById("totalCostValue");
-
-  if (pathResult) pathResult.classList.add("hidden");
-  if (costValue) costValue.innerHTML = "0";
-
-  if (status) {
-    status.textContent = "System Ready";
-    status.className =
-      "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
-  }
-
-  const aiModal = document.getElementById("aiModal");
-  if (aiModal) {
-    aiModal.classList.add("hidden");
-    aiModal.style.left = "";
-    aiModal.style.top = "";
-    aiModal.style.right = "1.5rem";
-  }
-
-  const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
-  if (aiAnalysisBtn) aiAnalysisBtn.classList.add("hidden");
-
-  lastPathSignature = null;
-  lastAiAnalysisSignature = null;
-  lastAiAnalysisData = null;
+  resetUiState();
 }
 
 export function resetProfileForm() {
@@ -1193,6 +1239,8 @@ export async function openProfileEditor() {
 }
 
 export async function initializeApp() {
+  resetEntireAppState();
+
   try {
     const res = await fetch("/api/profile", {
       credentials: "include"
@@ -1206,7 +1254,7 @@ export async function initializeApp() {
     await renderGraph();
 
   } catch {
-    resetProfileForm();
+    resetUiState();
 
     const modal = document.getElementById("profileModal");
     if (modal) modal.classList.remove("hidden");
