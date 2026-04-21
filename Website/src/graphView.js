@@ -8,6 +8,7 @@ let lastPathSignature = null;
 let lastHighlightedActions = new Set();
 let lastAiAnalysisSignature = null;
 let lastAiAnalysisData = null;
+let lastPathNodes = [];
 
 // --- CONFIGURATION & DATA MAPS ---
 
@@ -559,41 +560,58 @@ function renderAiModal(data) {
 
   // --- Simple mitigation list ---
   mitigations.innerHTML = "";
-  (data.recommendedMitigations || []).forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    mitigations.appendChild(li);
-  });
-
-  // --- Mitigation details ---
   mitigationDetails.innerHTML = "";
 
-  (data.mitigationDetails || []).forEach(mit => {
-    const div = document.createElement("div");
-    div.className = "p-2 rounded bg-slate-800 border border-slate-700";
+  const recommendedSection = document.getElementById("recommendedMitigationsSection");
+  const breakdownSection = document.getElementById("mitigationBreakdownSection");
 
-    let priorityClass = "";
+  const hasRecommended =
+    data.recommendedMitigations && data.recommendedMitigations.length > 0;
 
-    if (mit.priority === "PRIMARY") {
-      priorityClass = "bg-red-500/20 text-red-400";
-    } else if (mit.priority === "SECONDARY") {
-      priorityClass = "bg-yellow-500/20 text-yellow-400";
-    } else {
-      priorityClass = "bg-emerald-500/20 text-emerald-400";
-    }
+  if (hasRecommended) {
+    recommendedSection?.classList.remove("hidden");
 
-    div.innerHTML = `
-      <div class="flex justify-between items-center mb-1">
-        <span class="font-semibold text-white">${mit.name}</span>
-        <span class="text-[10px] px-2 py-0.5 rounded ${priorityClass}">
-          ${mit.priority}
-        </span>
-      </div>
-      <p class="text-slate-300 text-[11px]">${mit.reason}</p>
-    `;
+    data.recommendedMitigations.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      mitigations.appendChild(li);
+    });
+  } else {
+    recommendedSection?.classList.add("hidden");
+  }
 
-    mitigationDetails.appendChild(div);
-  });
+  // --- Mitigation details ---
+  const hasBreakdown =
+    data.mitigationDetails && data.mitigationDetails.length > 0;
+
+  if (hasBreakdown) {
+    breakdownSection?.classList.remove("hidden");
+
+    data.mitigationDetails.forEach(mit => {
+      const item = document.createElement("div");
+      item.className = "p-2 rounded bg-slate-800 border border-slate-700 mb-2";
+
+      item.innerHTML = `
+        <div class="flex justify-between items-center mb-1">
+          <span class="font-semibold text-white">${mit.name}</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full ${
+            mit.priority === "PRIMARY"
+              ? "bg-red-500/20 text-red-300"
+              : mit.priority === "SECONDARY"
+              ? "bg-yellow-500/20 text-yellow-300"
+              : "bg-emerald-500/20 text-emerald-300"
+          }">
+            ${mit.priority}
+          </span>
+        </div>
+        <p class="text-slate-300 text-[11px]">${mit.reason}</p>
+      `;
+
+      mitigationDetails.appendChild(item);
+    });
+  } else {
+    breakdownSection?.classList.add("hidden");
+  }
 
   modal.classList.remove("hidden");
 }
@@ -827,6 +845,9 @@ function setupMitigationListeners() {
       const aiAnalysisBtn = document.getElementById("aiAnalysisBtn");
       if (aiAnalysisBtn) aiAnalysisBtn.classList.add("hidden");
 
+      const exportReportBtn = document.getElementById("exportReportBtn");
+      if (exportReportBtn) exportReportBtn.classList.add("hidden");
+
       // Clear AI cache
       lastPathSignature = null;
       lastAiAnalysisSignature = null;
@@ -959,6 +980,11 @@ export function resetUiState() {
     aiAnalysisBtn.disabled = false;
     aiAnalysisBtn.textContent = "What Does This Mean?";
   }
+
+  const exportReportBtn = document.getElementById("exportReportBtn");
+    if (exportReportBtn) {
+      exportReportBtn.classList.add("hidden");
+    }
 
   // Hide and reset AI modal
   closeAiModal();
@@ -1147,6 +1173,7 @@ export async function computeAndShowPath() {
   try {
     status.textContent = "Computing...";
     const pathResp = await fetchAttackPath("ATTACKER", "CUSTOMER_DB");
+    lastPathNodes = pathResp.nodes.map(n => n.displayName);
 
     const currentSignature = buildPathSignature(pathResp);
 
@@ -1169,6 +1196,11 @@ export async function computeAndShowPath() {
 
     if (aiAnalysisBtn) {
       aiAnalysisBtn.classList.remove("hidden");
+    }
+
+    const exportReportBtn = document.getElementById("exportReportBtn");
+    if (exportReportBtn) {
+      exportReportBtn.classList.remove("hidden");
     }
 
   } catch (err) {
@@ -1219,6 +1251,522 @@ export async function runAiAnalysis() {
     if (aiAnalysisBtn) {
       aiAnalysisBtn.disabled = false;
       aiAnalysisBtn.textContent = "What Does This Mean?";
+    }
+  }
+}
+
+export async function exportReport() {
+  if (!lastPathSignature) return;
+
+  const status = document.getElementById("status");
+  const exportReportBtn = document.getElementById("exportReportBtn");
+
+  try {
+    if (status) {
+      status.textContent = "Building Report...";
+      status.className = "font-mono text-slate-300 uppercase tracking-widest";
+    }
+
+    if (exportReportBtn) {
+      exportReportBtn.disabled = true;
+      exportReportBtn.textContent = "Loading...";
+    }
+
+    let aiData = lastAiAnalysisData;
+
+    // If AI analysis has not been generated for the current path yet, fetch it now
+    if (!aiData || lastAiAnalysisSignature !== lastPathSignature) {
+      aiData = await fetchAiSummary("ATTACKER", "CUSTOMER_DB");
+      lastAiAnalysisData = aiData;
+      lastAiAnalysisSignature = lastPathSignature;
+    }
+
+    // Get current path nodes from highlighted Cytoscape nodes
+    const pathNodes = lastPathNodes || [];
+
+    // Get total cost from UI
+    const totalCost =
+      document.getElementById("totalCostValue")?.textContent?.trim() || "N/A";
+
+    // Get enabled mitigations
+    const enabledMitigations = Array.from(
+      document.querySelectorAll(".mitigation-checkbox:checked")
+    ).map(cb => cb.dataset.name);
+
+    // Get business profile if available
+    let profile = null;
+    try {
+      profile = await fetchProfile();
+    } catch {
+      profile = null;
+    }
+
+    const profileRows = profile
+      ? [
+          ["Uses VPN", profile.usesVPN],
+          ["Has File Server", profile.hasFileServer],
+          ["Uses SaaS", profile.usesSaaS],
+          ["Has Public Web App", profile.hasPublicWebApp],
+          ["Uses Identity Provider", profile.usesIdentityProvider],
+          ["Has Email Server", profile.hasEmailServer],
+          ["Has Domain Controller", profile.hasDomainController],
+          ["Has Internal App", profile.hasInternalApp],
+          ["Has HR System", profile.hasHRSystem],
+          ["Has Finance System", profile.hasFinanceSystem],
+          ["Has Backup Server", profile.hasBackupServer],
+          ["Has MDM Server", profile.hasMDMServer],
+          ["Has Wireless Access Point", profile.hasWirelessAccessPoint],
+          ["Has Firewall", profile.hasFirewall],
+          ["Has DNS Server", profile.hasDNSServer]
+        ]
+      : [];
+
+    const timestamp = new Date().toLocaleString();
+
+    const riskLevel = (aiData?.riskLevel || "N/A").toUpperCase();
+    let riskClass = "risk-medium";
+
+    if (riskLevel === "HIGH") {
+      riskClass = "risk-high";
+    } else if (riskLevel === "LOW") {
+      riskClass = "risk-low";
+    }
+
+    const reportWindow = window.open("", "_blank");
+
+    if (!reportWindow) {
+      throw new Error("Popup blocked. Please allow popups for this site.");
+    }
+
+    reportWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>GBAV Attack Path Report</title>
+        <style>
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #ffffff;
+            color: #111827;
+            margin: 0;
+            padding: 40px;
+          }
+
+          .report {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+
+          .header {
+            border-bottom: 3px solid #0f172a;
+            padding-bottom: 18px;
+            margin-bottom: 28px;
+          }
+
+          .title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+          }
+
+          .subtitle {
+            color: #475569;
+            font-size: 14px;
+            margin: 0;
+          }
+
+          .toolbar {
+            margin: 20px 0 30px 0;
+          }
+
+          .print-btn {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+          }
+
+          .section {
+            margin-bottom: 28px;
+          }
+
+          .section h2 {
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #334155;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+          }
+
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+          }
+
+          .card {
+            border: 1px solid #dbeafe;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 14px;
+          }
+
+          .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 700;
+          }
+
+          .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+          }
+
+          .risk-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+          }
+
+          .risk-high {
+            background: #fee2e2;
+            color: #b91c1c;
+          }
+
+          .risk-medium {
+            background: #fef3c7;
+            color: #92400e;
+          }
+
+          .risk-low {
+            background: #dcfce7;
+            color: #166534;
+          }
+
+          .path-box {
+            background: #f8fafc;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.7;
+            border: 1px solid #e5e7eb;
+          }
+
+          .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .tag {
+            background: #e2e8f0;
+            color: #0f172a;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+
+          .profile-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+
+          .profile-table th,
+          .profile-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+          }
+
+          .profile-table th {
+            color: #475569;
+            width: 65%;
+          }
+
+          ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+          }
+
+          li {
+            margin-bottom: 6px;
+          }
+
+          p {
+            line-height: 1.7;
+            margin: 0;
+          }
+
+          @media print {
+            .print-btn {
+              display: none !important;
+            }
+
+            body {
+              padding: 20px;
+            }
+          }
+
+            .header-top {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            }
+
+            .logo {
+              height: 40px;
+              width: auto;
+              object-fit: contain;
+            }
+
+            .mitigation-breakdown {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+
+            .mitigation-card {
+              border: 1px solid #dbeafe;
+              background: #f8fafc;
+              border-radius: 10px;
+              padding: 14px;
+            }
+
+            .mitigation-card-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 8px;
+            }
+
+            .mitigation-name {
+              font-size: 15px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+
+            .mitigation-reason {
+              margin: 0;
+              line-height: 1.7;
+              color: #334155;
+            }
+
+            .priority-badge {
+              display: inline-block;
+              padding: 5px 10px;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: 0.05em;
+              white-space: nowrap;
+            }
+
+            .priority-primary {
+              background: #fee2e2;
+              color: #b91c1c;
+            }
+
+            .priority-secondary {
+              background: #fef3c7;
+              color: #92400e;
+            }
+
+            .priority-low {
+              background: #dcfce7;
+              color: #166534;
+            }
+
+          }
+        </style>
+      </head>
+      <body>
+        <div class="report">
+          <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              
+              <!-- LEFT SIDE: logo + title -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img 
+                  src="${window.location.origin}/logo.png" 
+                  alt="GBAV Logo"
+                  style="height: 80px; width: auto; display: block;"
+                />
+
+                <div>
+                  <h1 class="title">GBAV Report</h1>
+                  <p class="subtitle">Generated on ${timestamp}</p>
+                </div>
+              </div>
+
+              <!-- RIGHT SIDE: print button -->
+              <button 
+                class="print-btn"
+                onclick="window.print()"
+                style="margin-left: 20px;"
+              >
+                Print / Save as PDF
+              </button>
+
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Report Overview</h2>
+            <div class="grid">
+              <div class="card">
+                <div class="metric-label">Total Attack Cost</div>
+                <div class="metric-value">${totalCost}</div>
+              </div>
+              <div class="card">
+                <div class="metric-label">Risk Level</div>
+                <div class="metric-value">
+                  <span class="risk-badge ${riskClass}">${riskLevel}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Attack Path</h2>
+            <div class="path-box">
+              ${pathNodes.length ? pathNodes.join(" → ") : "No path data available."}
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Enabled Mitigations</h2>
+            ${
+              enabledMitigations.length
+                ? `<div class="tag-list">${enabledMitigations
+                    .map(name => `<span class="tag">${name}</span>`)
+                    .join("")}</div>`
+                : `<p>No mitigations were enabled when this report was generated.</p>`
+            }
+          </div>
+
+          <div class="section">
+            <h2>Business Profile Summary</h2>
+            ${
+              profileRows.length
+                ? `
+                  <table class="profile-table">
+                    <tbody>
+                      ${profileRows
+                        .map(
+                          ([label, value]) => `
+                            <tr>
+                              <th>${label}</th>
+                              <td>${value ? "Yes" : "No"}</td>
+                            </tr>
+                          `
+                        )
+                        .join("")}
+                    </tbody>
+                  </table>
+                `
+                : `<p>Business profile information was not available.</p>`
+            }
+          </div>
+
+          <div class="section">
+            <h2>Risk Analysis</h2>
+            <div class="grid">
+              <div class="card">
+                <div class="metric-label">Summary</div>
+                <p>${aiData?.summary || "Not available."}</p>
+              </div>
+              <div class="card">
+                <div class="metric-label">Weakest Point</div>
+                <p>${aiData?.weakestPoint || "Not available."}</p>
+              </div>
+              <div class="card">
+                <div class="metric-label">Business Impact</div>
+                <p>${aiData?.businessImpact || "Not available."}</p>
+              </div>
+              <div class="card">
+                <div class="metric-label">Top Recommendation</div>
+                <p>${aiData?.topRecommendation || "Not available."}</p>
+              </div>
+            </div>
+          </div>
+
+          ${
+            aiData?.mitigationDetails?.length
+              ? `
+                <div class="section">
+                  <h2>Mitigation Breakdown</h2>
+                  <div class="mitigation-breakdown">
+                    ${aiData.mitigationDetails
+                      .map(mit => {
+                        const priority = (mit.priority || "").toUpperCase();
+
+                        let priorityClass = "priority-low";
+                        if (priority === "PRIMARY") {
+                          priorityClass = "priority-primary";
+                        } else if (priority === "SECONDARY") {
+                          priorityClass = "priority-secondary";
+                        }
+
+                        return `
+                          <div class="mitigation-card">
+                            <div class="mitigation-card-header">
+                              <div class="mitigation-name">${mit.name || "Unnamed Mitigation"}</div>
+                              <span class="priority-badge ${priorityClass}">
+                                ${priority || "INFO"}
+                              </span>
+                            </div>
+                            <p class="mitigation-reason">${mit.reason || ""}</p>
+                          </div>
+                        `;
+                      })
+                      .join("")}
+                  </div>
+                </div>
+              `
+              : ""
+          }
+        </div>
+      </body>
+      </html>
+    `);
+
+    reportWindow.document.close();
+
+    if (status) {
+      status.textContent = "Report Ready";
+      status.className =
+        "font-mono text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
+    }
+  } catch (err) {
+    console.error("Export report failed:", err);
+
+    if (status) {
+      status.textContent = "Report Error";
+      status.className = "font-mono text-rose-500 uppercase tracking-widest";
+    }
+
+    alert(err.message || "Failed to export report.");
+  } finally {
+    if (exportReportBtn) {
+      exportReportBtn.disabled = false;
+      exportReportBtn.textContent = "Export Report";
     }
   }
 }

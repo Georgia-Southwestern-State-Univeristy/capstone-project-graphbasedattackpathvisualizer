@@ -6,7 +6,8 @@ import {
   clearPath,
   initializeApp,
   resetProfileForm,
-  resetEntireAppState
+  resetEntireAppState,
+  exportReport
 } from "./graphView.js";
 
 async function fetchCurrentUser() {
@@ -189,7 +190,10 @@ function setupAppButtons() {
   document.getElementById("aiAnalysisBtn")
     ?.addEventListener("click", () => runAiAnalysis());
 
-    document.getElementById("logoutFromProfileBtn")
+  document.getElementById("exportReportBtn")
+  ?.addEventListener("click", () => exportReport());
+
+  document.getElementById("logoutFromProfileBtn")
   ?.addEventListener("click", () => {
     openLogoutConfirmModal();
   });
