@@ -57,6 +57,7 @@ public class AiAnalysisService {
         prompt.append("Base your response only on the provided data.\n");
         prompt.append("Do not invent systems, mitigations, attack steps, or system names that are not included.\n");
         prompt.append("Use only the provided mitigation names when recommending mitigations.\n");
+        prompt.append("Never include any mitigation from the Enabled Mitigations list in recommendedMitigations, mitigationDetails, or as the mitigation named in topRecommendation.\n");
         prompt.append("The recommendedMitigations field must contain EXACTLY all items from the Final Recommended Mitigations list, with no omissions and no additions.\n");
 
         // Risk rules
@@ -87,13 +88,26 @@ public class AiAnalysisService {
         prompt.append("The summary must clearly explain WHY this attack path is dangerous in real-world terms.\n");
         prompt.append("Identify the weakest point in the attack path (the easiest or most exposed step).\n");
         prompt.append("Explain the business impact if the attack succeeds (data breach, financial loss, etc).\n");
-        prompt.append("Prioritize mitigations by impact (most important first).\n");
+        prompt.append("Prioritize only ADDITIONAL mitigations that are not already enabled.\n");
+        prompt.append("Do not recommend any mitigation that appears in the Enabled Mitigations list.\n");
+        prompt.append("Do not tell the user to implement, enable, or add a mitigation that is already enabled.\n");
         prompt.append("Use the following priority meanings:\n");
-        prompt.append("- PRIMARY: most important mitigation to implement first (protects entry point or weakest step)\n");
-        prompt.append("- SECONDARY: important but not the first control to implement\n");
-        prompt.append("- DEFENSE-IN-DEPTH: adds additional protection but is not critical on its own\n");
-        prompt.append("Provide a topRecommendation that tells the user the single best mitigation to implement first and why.\n");
-        prompt.append("For each mitigation, explain how it directly blocks or reduces a specific step in the attack path.\n");
+        prompt.append("- PRIMARY: most important additional mitigation to implement first\n");
+        prompt.append("- SECONDARY: helpful additional mitigation, but not the first control to implement\n");
+        prompt.append("- DEFENSE-IN-DEPTH: optional added protection beyond the primary recommendations\n");
+        prompt.append("If one or more recommended mitigations remain after excluding enabled mitigations, topRecommendation must name the single best additional mitigation and explain why.\n");
+        prompt.append("If no recommended mitigations remain after excluding enabled mitigations, topRecommendation must clearly state that the key recommended mitigations are already enabled and briefly describe any remaining residual risk.\n");
+        prompt.append("If no recommended mitigations remain after excluding enabled mitigations, recommendedMitigations must be an empty list.\n");
+        prompt.append("If no recommended mitigations remain after excluding enabled mitigations, mitigationDetails must be an empty list.\n");
+        prompt.append("For each mitigation in mitigationDetails, explain how it makes it harder for the attacker to perform a real-world action (such as gaining access, moving laterally, or extracting data), and clearly describe the security impact in plain language.\n");
+        prompt.append("Do NOT describe the mitigation using phrases like 'reduces the X to Y step' or restate graph transitions. Focus on attacker behavior, not system steps.\n");
+        prompt.append("Use phrasing like: 'This mitigation makes it harder for the attacker to...' and explain the mechanism and impact.\n");
+        prompt.append("When one or more relevant mitigations are already enabled, the summary, weakestPoint, and businessImpact must describe the REMAINING or RESIDUAL risk, not the unmitigated risk.\n");
+        prompt.append("Do not describe an already mitigated step as completely unprotected.\n");
+        prompt.append("If the overall riskLevel is LOW, use calmer wording that reflects reduced but remaining risk.\n");
+        prompt.append("If no additional recommended mitigations remain, weakestPoint should identify the most exposed remaining step or entry point, while acknowledging that relevant protections are already enabled.\n");
+        prompt.append("If no additional recommended mitigations remain, summary should explain that the path still exists but that enabled protections have already reduced risk.\n");
+        prompt.append("If no additional recommended mitigations remain, businessImpact should describe potential impact only if the remaining controls are bypassed or fail.\n");
 
         // =========================
         // DATA INPUT

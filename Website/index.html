@@ -32,22 +32,22 @@
 
 <body class="h-screen bg-slate-900 text-slate-200 overflow-hidden text-[11px]">
   <div id="authOverlay" class="hidden fixed inset-0 z-[2000] bg-slate-950 flex items-center justify-center px-4 py-6">
-    <div class="w-full max-w-md max-h-[90vh] flex flex-col bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
-      <div class="p-8 overflow-y-auto sidebar-scroll">
-        <div class="flex justify-center mb-4">
-          <img src="/logo.png" alt="GBAV Logo" class="h-16 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
-        </div>
+  <div class="w-full max-w-md max-h-[90dvh] flex flex-col bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="p-4 sm:p-6 flex flex-col flex-1 min-h-0">
+      <div class="flex justify-center mb-4">
+        <img src="/logo.png" alt="GBAV Logo" class="h-16 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+      </div>
 
-        <h2 class="text-2xl font-bold text-white text-center uppercase tracking-wider mb-2">
-          GBAV Access Portal
-        </h2>
+      <h2 class="text-2xl font-bold text-white text-center uppercase tracking-wider mb-2">
+        GBAV Access Portal
+      </h2>
 
-        <p class="text-slate-400 text-sm text-center mb-6">
-          Sign in or create an account to access your attack path dashboard
-        </p>
+      <p class="text-slate-400 text-sm text-center mb-6">
+        Sign in or create an account to access your attack path dashboard
+      </p>
 
-        <!-- Tabs -->
-        <div class="relative bg-slate-800 rounded-xl p-1 mb-6 flex">
+      <div class="flex justify-center mb-6">
+        <div class="relative w-full max-w-sm bg-slate-800 rounded-xl p-1 flex">
           <div
             id="authTabSlider"
             class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-emerald-600 transition-all duration-300 ease-in-out"
@@ -69,17 +69,19 @@
             Sign Up
           </button>
         </div>
+      </div>
 
-        <!-- Sliding forms wrapper -->
-        <div class="overflow-hidden">
-          <div
-            id="authFormsTrack"
-            class="flex w-[200%] transition-transform duration-300 ease-in-out"
-            style="transform: translateX(0%);"
-          >
-            <!-- Sign In panel -->
-            <div class="w-1/2 pr-2">
-              <form id="signInForm" class="space-y-4" novalidate>
+      <!-- Sliding forms wrapper -->
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden sidebar-scroll">
+        <div
+          id="authFormsTrack"
+          class="flex w-[200%] h-full transition-transform duration-300 ease-in-out"
+          style="transform: translateX(0%);"
+        >
+          <!-- Sign In panel -->
+          <div class="w-1/2 h-full min-h-0 flex justify-center">
+            <div class="w-full max-w-sm min-h-full">
+              <form id="signInForm" class="space-y-2.5 pb-2" novalidate>
                 <div>
                   <label for="signInEmail" class="block text-sm font-medium mb-1 text-slate-300">
                     Email
@@ -109,16 +111,18 @@
                 <button
                   type="submit"
                   id="signInSubmitBtn"
-                  class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+                  class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
                 >
                   Sign In
                 </button>
               </form>
             </div>
+          </div>
 
-            <!-- Sign Up panel -->
-            <div class="w-1/2 pl-2">
-              <form id="signUpForm" class="space-y-4" novalidate>
+          <!-- Sign Up panel -->
+          <div class="w-1/2 h-full min-h-0 flex justify-center">
+            <div class="w-full max-w-sm min-h-full">
+              <form id="signUpForm" class="space-y-2.5 pb-2" novalidate>
                 <div>
                   <label for="signUpEmail" class="block text-sm font-medium mb-1 text-slate-300">
                     Email
@@ -165,7 +169,7 @@
                 <button
                   type="submit"
                   id="signUpSubmitBtn"
-                  class="w-full bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
+                  class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 transition px-4 py-2 rounded-lg font-semibold"
                 >
                   Sign Up
                 </button>
@@ -176,8 +180,9 @@
       </div>
     </div>
   </div>
+</div>
 
-<div id="appShell" class="hidden flex h-full">
+  <div id="appShell" class="hidden flex h-full">
 
 
     <!-- Left side bar -->
@@ -211,9 +216,9 @@
         </div>
         
         <div class="flex items-center gap-4">
-          <a href="/pricing.html" class="bg-emerald-600 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Pricing</a>
+          <a href="/pricing.html" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Pricing</a>
           <button id="helpBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600"> Help </button>
-          <button id="reloadBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Reload Graph</button>
+          <button id="reloadBtn" class="bg-slate-700 hover:bg-slate-600 transition px-3 py-1 rounded-lg border border-slate-600">Refresh Graph</button>
           <button id="profileBtn" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 transition border border-slate-600 flex items-center justify-center shrink-0" title="Profile"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5Z"/></svg></button>
           <span id="status" class="font-mono text-slate-500 uppercase"></span>
         </div>
@@ -232,12 +237,21 @@
                 </div>
               </div>
 
-              <button
-                id="aiAnalysisBtn"
-                class="hidden bg-slate-700 hover:bg-slate-600 transition px-3 py-2 rounded-lg border border-slate-600 text-[10px] font-bold uppercase tracking-wider text-slate-200"
-              >
-                What does this mean?
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  id="aiAnalysisBtn"
+                  class="hidden bg-slate-700 hover:bg-slate-600 transition px-3 py-2 rounded-lg border border-slate-600 text-[10px] font-bold uppercase tracking-wider text-slate-200"
+                >
+                  What does this mean?
+                </button>
+
+                <button
+                  id="exportReportBtn"
+                  class="hidden bg-emerald-700 hover:bg-emerald-800 transition px-3 py-2 rounded-lg border border-slate-600 text-[10px] font-bold uppercase tracking-wider text-white"
+                >
+                  Export Report
+                </button>
+              </div>
             </div>
             
             <div id="cy" class="flex-1 w-full"></div>
@@ -603,7 +617,7 @@
   </div>
 </div>
 
-<div id="helpModal" class="hidden fixed inset-0 z-[1200]">
+<div id="helpModal" class="hidden fixed inset-0 z-[1400]">
   <div id="helpBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
   <div class="absolute inset-0 flex items-center justify-center p-4">
@@ -676,16 +690,59 @@
       <p id="aiBusinessImpact" class="text-amber-300 text-xs"></p>
     </div>
 
-    <div>
-      <h4 class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Recommended Mitigations</h4>
+    <div id="recommendedMitigationsSection">
+      <h4 class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+        Recommended Mitigations
+      </h4>
       <ul id="aiMitigations" class="list-disc pl-4 space-y-1 text-emerald-400 font-medium text-xs"></ul>
     </div>
 
-    <div>
-      <h4 class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Mitigation Breakdown</h4>
+    <div id="mitigationBreakdownSection">
+      <h4 class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+        Mitigation Breakdown
+      </h4>
       <div id="aiMitigationDetails" class="space-y-2 text-xs"></div>
     </div>
 
+  </div>
+</div>
+
+<div id="logoutConfirmModal" class="hidden fixed inset-0 z-[1400]">
+  <!-- backdrop -->
+  <div id="logoutConfirmBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+  <!-- modal -->
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-slate-900 text-slate-200 shadow-2xl p-6 space-y-6 animate-in border border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.25)]">
+
+      <!-- Title -->
+      <h2 class="text-lg font-semibold text-white text-center tracking-wide">
+        Confirm Logout
+      </h2>
+
+      <!-- Message -->
+      <p class="text-center text-base text-slate-300 leading-relaxed">
+        Are you sure you want to log out?
+      </p>
+
+      <!-- Buttons -->
+      <div class="flex justify-center gap-4 pt-2">
+        <button
+          id="cancelLogoutBtn"
+          class="px-5 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition font-medium"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="confirmLogoutBtn"
+          class="px-5 py-2 rounded-lg bg-red-700 hover:bg-red-800 active:bg-red-900 transition font-semibold"
+        >
+          Logout
+        </button>
+      </div>
+
+    </div>
   </div>
 </div>
 

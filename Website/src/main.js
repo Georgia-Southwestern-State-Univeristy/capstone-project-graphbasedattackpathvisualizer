@@ -1,7 +1,14 @@
 import "./style.css";
-import { renderGraph, computeAndShowPath, runAiAnalysis, clearPath, initializeApp, resetProfileForm } from "./graphView.js";/* =========================
-   AUTH FUNCTIONS
-========================= */
+import {
+  renderGraph,
+  computeAndShowPath,
+  runAiAnalysis,
+  clearPath,
+  initializeApp,
+  resetProfileForm,
+  resetEntireAppState,
+  exportReport
+} from "./graphView.js";
 
 async function fetchCurrentUser() {
   const res = await fetch("/api/auth/me", {
@@ -72,6 +79,55 @@ async function logoutUser() {
    UI HELPERS
 ========================= */
 
+function openLogoutConfirmModal() {
+  document.getElementById("logoutConfirmModal")?.classList.remove("hidden");
+}
+
+function closeLogoutConfirmModal() {
+  document.getElementById("logoutConfirmModal")?.classList.add("hidden");
+}
+
+function clearAuthMessages() {
+  const signInError = document.getElementById("signInError");
+  const signUpError = document.getElementById("signUpError");
+  const signUpSuccess = document.getElementById("signUpSuccess");
+  const passwordRuleHint = document.getElementById("passwordRuleHint");
+
+  if (signInError) {
+    signInError.textContent = "";
+    signInError.classList.add("hidden");
+  }
+
+  if (signUpError) {
+    signUpError.textContent = "";
+    signUpError.classList.add("hidden");
+  }
+
+  if (signUpSuccess) {
+    signUpSuccess.textContent = "";
+    signUpSuccess.classList.add("hidden");
+  }
+
+  if (passwordRuleHint) {
+    passwordRuleHint.classList.remove("text-emerald-400", "text-red-400");
+    passwordRuleHint.classList.add("text-slate-400");
+  }
+}
+
+function clearAuthFields() {
+  const signInEmail = document.getElementById("signInEmail");
+  const signInPassword = document.getElementById("signInPassword");
+  const signUpEmail = document.getElementById("signUpEmail");
+  const signUpPassword = document.getElementById("signUpPassword");
+  const signUpConfirmPassword = document.getElementById("signUpConfirmPassword");
+
+  if (signInEmail) signInEmail.value = "";
+  if (signInPassword) signInPassword.value = "";
+  if (signUpEmail) signUpEmail.value = "";
+  if (signUpPassword) signUpPassword.value = "";
+  if (signUpConfirmPassword) signUpConfirmPassword.value = "";
+}
+
 function isValidEmail(email) {
   const emailRegex = /^[A-Za-z][A-Za-z0-9._%+-]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
   return emailRegex.test(email);
@@ -84,6 +140,9 @@ function isValidPassword(password) {
 }
 
 function showAuthOverlay() {
+  clearAuthMessages();
+  clearAuthFields();
+
   document.getElementById("authOverlay")?.classList.remove("hidden");
   document.getElementById("appShell")?.classList.add("hidden");
 }
@@ -131,30 +190,37 @@ function setupAppButtons() {
   document.getElementById("aiAnalysisBtn")
     ?.addEventListener("click", () => runAiAnalysis());
 
-    document.getElementById("logoutFromProfileBtn")
-    ?.addEventListener("click", async () => {
-      try {
-        await logoutUser();
+  document.getElementById("exportReportBtn")
+  ?.addEventListener("click", () => exportReport());
 
-        const userProfileModal = document.getElementById("userProfileModal");
-        if (userProfileModal) userProfileModal.classList.add("hidden");
+  document.getElementById("logoutFromProfileBtn")
+  ?.addEventListener("click", () => {
+    openLogoutConfirmModal();
+  });
+}
 
-        showAuthOverlay();
+function setupLogoutModal() {
+  const confirmBtn = document.getElementById("confirmLogoutBtn");
+  const cancelBtn = document.getElementById("cancelLogoutBtn");
+  const backdrop = document.getElementById("logoutConfirmBackdrop");
 
-        const signInPw = document.getElementById("signInPassword");
-        const signUpPw = document.getElementById("signUpPassword");
-        const signUpConfirmPw = document.getElementById("signUpConfirmPassword");
+  confirmBtn?.addEventListener("click", async () => {
+    try {
+      await logoutUser();
 
-        if (signInPw) signInPw.value = "";
-        if (signUpPw) signUpPw.value = "";
-        if (signUpConfirmPw) signUpConfirmPw.value = "";
+      document.getElementById("userProfileModal")?.classList.add("hidden");
 
-        resetProfileForm();
+      resetEntireAppState();
+      closeLogoutConfirmModal();
+      showAuthOverlay();
 
-      } catch (err) {
-        alert(err.message);
-      }
-    });
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  cancelBtn?.addEventListener("click", closeLogoutConfirmModal);
+  backdrop?.addEventListener("click", closeLogoutConfirmModal);
 }
 
 /* =========================
@@ -299,9 +365,7 @@ function setupAuthForms() {
       await registerUser(userEmail, password);
       await loginUser(userEmail, password);
 
-      signUpSuccess.textContent = "Account created successfully.";
-      signUpSuccess.classList.remove("hidden");
-
+      clearAuthMessages();
       showAppShell();
       await initializeApp();
     } catch (err) {
@@ -359,6 +423,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupAppButtons();
   setupAuthForms();
   setupHelpModal();
+  setupLogoutModal();
 
   const user = await fetchCurrentUser();
 
